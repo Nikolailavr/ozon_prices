@@ -1,0 +1,12 @@
+__pycache__/
+.idea
+/.idea
+/logs
+/venv
+db.sqlite3
+bot/__pycache__
+bot/db/__pycache__
+bot/db/tables/__pycache__
+bot/handlers/__pycache__
+bot/user/__pycache__
+bot/misc/__pycache__
