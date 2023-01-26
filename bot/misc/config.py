@@ -8,10 +8,10 @@ HELP_MESSAGE = """
 /add - добавить новый url для подписки
 /list - показать список url в подписке
 /delete - удалить url из подписки"""
-MSG_ADD = """
-Чтобы добавить новый url в подписку отправьте его в сообщении"""
-MSG_DELETE = """
-Чтобы удалить url из подписки отправьте его в сообщении"""
+
+MSG_ADD = """Чтобы добавить новый url в подписку отправьте его в сообщении"""
+
+MSG_DELETE = """Чтобы удалить url из подписки отправьте его в сообщении"""
 
 options = webdriver.ChromeOptions()
 options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
@@ -27,3 +27,10 @@ driver_path = "/home/lnv/soft/ozon_prices/chrome/chromedriver"
 text_for_replace_title = " — купить в интернет-магазине OZON с быстрой доставкой"
 
 BAD_MSG = "Я вас не понял, чтобы кзнать доступные команды наберите /help"
+
+BAD_URL = """Ваш url имеет неверный формат, пожалуйста, убедитесь что вы правильно скопировали ссылку на товар.
+Ваша ссылка должна начинаться с https://www.ozon.ru/product/"""
+
+GOOD_URL = """Ваш url успешно добавлен в подписку!"""
+
+GOOD_DELETE = """Ваш url успешно удален из подписки!"""
