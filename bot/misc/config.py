@@ -22,7 +22,7 @@ options.add_argument("--disable-dev-shm-usage")  # overcome limited resource pro
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
 
-driver_path = "/home/lnv/soft/ozon_prices/chrome/chromedriver"
+driver_path = "chrome/chromedriver"
 
 text_for_replace_title = " — купить в интернет-магазине OZON с быстрой доставкой"
 

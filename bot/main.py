@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.service import Service
 from aiogram import Bot
 import time
 
-from bot.misc import TgKeys, logger, driver_path, options, text_for_replace_title
+from bot.misc import TgKeys, logger, driver_path, text_for_replace_title, options
 from bot.db import read_links, update_price
 from bot.db.main import Link
 
@@ -86,7 +86,7 @@ async def _checking(link: Link, bot: Bot) -> None:
 #             price = int(price_temp)
 #         except:
 #             ...
-
+#
 #
 # if __name__ == "__main__":
 #     test_check()
