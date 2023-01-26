@@ -3,16 +3,16 @@ from selenium.webdriver.chrome.service import Service
 from aiogram import Bot
 import time
 
-from bot.misc import TgKeys, logger, current_price, driver_path, options, text_for_replace_title
+from bot.misc import TgKeys, logger, driver_path, options, text_for_replace_title
 from bot.db import read_links, update_price
 from bot.db.main import Link
 
 
 async def start_checking():
     bot = Bot(token=TgKeys.TOKEN, parse_mode='HTML')
-    links = read_links()
+    links = await read_links()
     for link in links:
-        await _checking(link=link.url, bot=bot)
+        await _checking(link=link, bot=bot)
 
 
 async def _checking(link: Link, bot: Bot) -> None:
@@ -24,10 +24,10 @@ async def _checking(link: Link, bot: Bot) -> None:
         driver.set_page_load_timeout(30)
     except Exception as ex:
         logger.error(ex)
-        bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
+        await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
     else:
         try:
-            await driver.get(url=link.url)
+            driver.get(url=link.url)
             time.sleep(1)
             html = driver.page_source
             title = driver.title.replace(text_for_replace_title, "")
@@ -46,8 +46,8 @@ async def _checking(link: Link, bot: Bot) -> None:
             price = int(price_temp)
             if price != link.price:
                 await bot.send_message(chat_id=link.id,
-                                 text=f"{title}\nСтарая цена: {link.price} руб\nНовая цена: {price} руб\n{url}")
-                update_price(data=link)
+                                 text=f"{title}\nСтарая цена: {link.price} руб\nНовая цена: {price} руб\n{link.url}")
+                await update_price(link=link)
         except Exception as ex:
             logger.error(ex)
             await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
