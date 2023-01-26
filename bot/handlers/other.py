@@ -23,9 +23,12 @@ async def other_messages(msg: Message) -> None:
 
 async def __add_link(msg: Message) -> None:
     if msg.text.startswith("https://www.ozon.ru/product/"):
+        url = msg.text
+        if url[-1] == "/":
+            url = url[:-1]
         try:
-            await add_link(link=Link(id=msg.from_user.id, url=msg.text, price=0))
-            await update_price(link=Link(id=msg.from_user.id, url=msg.text, price=0))
+            await add_link(link=Link(id=msg.from_user.id, url=url, price=0))
+            await update_price(link=Link(id=msg.from_user.id, url=url, price=0))
         except Exception as ex:
             logger.error(ex)
         else:
