@@ -4,7 +4,7 @@ import bot.misc.config as config
 from bot.db.main import Link
 
 
-async def update_price(data: Link) -> None:
+async def update_price(link: Link) -> None:
     sql = f"""
         INSERT OR REPLACE INTO prices
         (url_link, price)
@@ -13,8 +13,8 @@ async def update_price(data: Link) -> None:
         await db.execute(
             sql,
             {
-                "url_link": data.url,
-                "price": data.price,
+                "url_link": link.url,
+                "price": link.price,
             },
         )
         await db.commit()
