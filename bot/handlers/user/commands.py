@@ -1,33 +1,47 @@
-from aiogram import Dispatcher, Bot
-from aiogram.types import Message, CallbackQuery, PreCheckoutQuery, ContentType
-from aiogram.dispatcher import FSMContext
+from aiogram import Dispatcher
+from aiogram import Bot
+from aiogram.types import Message
 
-from bot.misc import HELP_MESSAGE
-from bot.handlers.user.logic import _add, _list, _delete
+from bot.db import read_links, update_last_command
+from bot.db.main import User
+from bot.misc import config, logger
 
 
 async def __start(msg: Message) -> None:
     bot: Bot = msg.bot
-    text = f"Привет, <b>{msg.from_user.first_name}</b>!\n{HELP_MESSAGE}"
+    text = f"Привет, <b>{msg.from_user.first_name}</b>!\n{config.HELP_MESSAGE}"
     await bot.send_message(chat_id=msg.from_user.id, text=text)
-
 
 
 async def __help(msg: Message) -> None:
     bot: Bot = msg.bot
-    await bot.send_message(chat_id=msg.from_user.id, text=HELP_MESSAGE)
+    await bot.send_message(chat_id=msg.from_user.id, text=config.HELP_MESSAGE)
 
 
 async def __add(msg: Message) -> None:
-    await _add(msg=msg)
+    bot: Bot = msg.bot
+    await bot.send_photo(chat_id=msg.from_user.id, photo=config.example_url, caption=config.CAPTION_EX_URL)
+    await bot.send_message(chat_id=msg.from_user.id, text=config.MSG_ADD)
+    await update_last_command(User(id=msg.from_user.id, command="/add"))
 
 
 async def __delete(msg: Message) -> None:
-    await _delete(msg=msg)
+    bot: Bot = msg.bot
+    await bot.send_message(chat_id=msg.from_user.id, text=config.MSG_DELETE)
+    await update_last_command(User(id=msg.from_user.id, command="/delete"))
 
 
 async def __list(msg: Message) -> None:
-    await _list(msg=msg)
+    result = "Список url из вашей подписки:\n\n"
+    try:
+        links = await read_links(telegram_id=msg.from_user.id)
+    except Exception as ex:
+        logger.error(ex)
+    else:
+        bot: Bot = msg.bot
+        for index, link in enumerate(links, 1):
+            result += f"{index}. {link.url}\n"
+        await bot.send_message(chat_id=msg.from_user.id, text=result)
 
 
 def register_users_handlers(dp: Dispatcher) -> None:
