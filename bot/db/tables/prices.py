@@ -5,7 +5,7 @@ from bot.db.main import Link
 
 
 async def update_price(link: Link) -> None:
-    sql = f"""
+    sql = """
         INSERT OR REPLACE INTO prices
         (url_link, price)
         VALUES (:url_link, :price);"""
@@ -18,15 +18,3 @@ async def update_price(link: Link) -> None:
             },
         )
         await db.commit()
-
-
-# async def get_price(url: str) -> int:
-#     sql = f"""
-#         SELECT price IN prices
-#         WHERE url_link={url};"""
-#     async with aiosqlite.connect(config.SQLITE_DB_FILE) as db:
-#         db.row_factory = aiosqlite.Row
-#         async with db.execute(sql) as cursor:
-#             async for row in cursor:
-#                 if row["price"] is None: return 0
-#                 else: return int(row["price"])
