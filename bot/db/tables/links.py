@@ -1,7 +1,7 @@
 import aiosqlite
 
 from bot.db.main import Link
-import bot.misc.config as config
+from bot.misc import config
 
 
 async def read_links(telegram_id: int = None) -> list[Link]:

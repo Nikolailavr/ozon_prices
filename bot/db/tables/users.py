@@ -1,7 +1,7 @@
 import aiosqlite
 
-import bot.misc.config as config
 from bot.db.main import User
+from bot.misc import config
 
 
 async def read_user(telegram_id: int) -> User:

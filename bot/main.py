@@ -4,7 +4,7 @@ from selenium.webdriver.chrome.service import Service
 from aiogram import Bot
 import time
 
-from bot.misc import TgKeys, logger, driver_path, text_for_replace_title, options
+from bot.misc import TgKeys, logger, config
 from bot.db import read_links, update_price
 from bot.db.main import Link
 
@@ -19,9 +19,9 @@ async def _checking(link: Link) -> None:
     bot = Bot(token=TgKeys.TOKEN, parse_mode='HTML')
     html = ""
     title = ""
-    service = Service(executable_path=driver_path)
+    service = Service(executable_path=config.driver_path)
     try:
-        driver = Chrome(service=service, options=options)
+        driver = Chrome(service=service, options=config.options)
         driver.set_page_load_timeout(30)
     except Exception as ex:
         logger.error(ex)
@@ -31,7 +31,7 @@ async def _checking(link: Link) -> None:
             driver.get(url=link.url)
             time.sleep(1)
             html = driver.page_source
-            title = driver.title.replace(text_for_replace_title, "")
+            title = driver.title.replace(config.text_for_replace_title, "")
         except Exception as ex:
             logger.error(ex)
             await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")

@@ -11,16 +11,19 @@ async def __start(msg: Message) -> None:
     bot: Bot = msg.bot
     text = f"Привет, <b>{msg.from_user.first_name}</b>!\n{config.HELP_MESSAGE}"
     await bot.send_message(chat_id=msg.from_user.id, text=text)
+    await update_last_command(User(id=msg.from_user.id, command=""))
 
 
 async def __help(msg: Message) -> None:
     bot: Bot = msg.bot
     await bot.send_message(chat_id=msg.from_user.id, text=config.HELP_MESSAGE)
+    await update_last_command(User(id=msg.from_user.id, command=""))
 
 
 async def __add(msg: Message) -> None:
     bot: Bot = msg.bot
-    await bot.send_photo(chat_id=msg.from_user.id, photo=config.example_url, caption=config.CAPTION_EX_URL)
+    with open(config.example_url, "rb") as photo:
+        await bot.send_photo(chat_id=msg.from_user.id, photo=photo, caption=config.CAPTION_EX_URL)
     await bot.send_message(chat_id=msg.from_user.id, text=config.MSG_ADD)
     await update_last_command(User(id=msg.from_user.id, command="/add"))
 
@@ -32,6 +35,7 @@ async def __delete(msg: Message) -> None:
 
 
 async def __list(msg: Message) -> None:
+    await update_last_command(User(id=msg.from_user.id, command=""))
     result = "Список url из вашей подписки:\n\n"
     try:
         links = await read_links(telegram_id=msg.from_user.id)

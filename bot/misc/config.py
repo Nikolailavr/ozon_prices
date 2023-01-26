@@ -1,8 +1,10 @@
 from selenium import webdriver
+from aiogram.types import InputFile
+
 
 # Paths
 driver_path = "./home/lnv/soft/ozon_prices/chrome/chromedriver"
-example_url = "./home/lnv/soft/ozon_prices/bot/misc/example_url.png"
+example_url = "/home/lnv/soft/ozon_prices/bot/misc/example_url.png"
 SQLITE_DB_FILE = "db.sqlite3"
 
 # ChromeOptions

@@ -3,7 +3,7 @@ from aiogram.types import Message
 
 from bot.db import read_user, add_link, delete_link, update_last_command, update_price
 from bot.db.main import User, Link
-from bot.misc import logger, BAD_MSG, BAD_URL, GOOD_URL, GOOD_DELETE
+from bot.misc import logger, config
 
 
 async def other_messages(msg: Message) -> None:
@@ -17,7 +17,7 @@ async def other_messages(msg: Message) -> None:
             await update_last_command(data=User(id=msg.from_user.id, command=""))
         case _:
             bot: Bot = msg.bot
-            await bot.send_message(msg.from_user.id, BAD_MSG)
+            await bot.send_message(msg.from_user.id, config.BAD_MSG)
             await update_last_command(data=User(id=msg.from_user.id, command=""))
 
 
@@ -31,10 +31,10 @@ async def __add_link(msg: Message) -> None:
         else:
             bot: Bot = msg.bot
             await bot.delete_message(chat_id=msg.from_user.id, message_id=msg.message_id)
-            await bot.send_message(chat_id=msg.from_user.id, text=GOOD_URL)
+            await bot.send_message(chat_id=msg.from_user.id, text=config.GOOD_URL)
     else:
         bot: Bot = msg.bot
-        await bot.send_message(chat_id=msg.from_user.id, text=BAD_URL)
+        await bot.send_message(chat_id=msg.from_user.id, text=config.BAD_URL)
 
 
 async def __delete_link(msg: Message) -> None:
@@ -45,7 +45,7 @@ async def __delete_link(msg: Message) -> None:
     else:
         bot: Bot = msg.bot
         await bot.delete_message(chat_id=msg.from_user.id, message_id=msg.message_id)
-        await bot.send_message(chat_id=msg.from_user.id, text=GOOD_DELETE)
+        await bot.send_message(chat_id=msg.from_user.id, text=config.GOOD_DELETE)
 
 
 def register_other_handlers(dp: Dispatcher) -> None:
