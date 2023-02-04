@@ -7,7 +7,7 @@ from bot.misc import config
 async def read_links(telegram_id: int = None) -> list[Link]:
     links = list()
     sql = """
-        SELECT l.url_link as url, p.price as price 
+        SELECT l.telegram_id as id, l.url_link as url, p.price as price 
         FROM links as l
         LEFT JOIN prices p on l.url_link=p.url_link"""
     if telegram_id:
@@ -18,7 +18,7 @@ async def read_links(telegram_id: int = None) -> list[Link]:
         async with db.execute(sql) as cursor:
             async for row in cursor:
                 links.append(Link(
-                    id=telegram_id,
+                    id=row["id"],
                     url=row["url"],
                     price=int(row["price"]),
                 ))
