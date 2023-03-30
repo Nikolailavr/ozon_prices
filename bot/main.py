@@ -17,7 +17,7 @@ async def start_checking():
 async def _checking(link: Link) -> None:
     bot = Bot(token=TgKeys.TOKEN, parse_mode='HTML')
     html = ""
-    title = ""
+    title = "Just a moment..."
     service = Service(executable_path=config.driver_path)
     try:
         driver = Chrome(service=service, options=config.options)
@@ -27,10 +27,13 @@ async def _checking(link: Link) -> None:
         await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
     else:
         try:
+            count = 0
             driver.get(url=link.url)
-            time.sleep(1)
             html = driver.page_source
             title = driver.title.replace(config.text_for_replace_title, "")
+            while title == 'Just a moment...' or count < 12:
+                time.sleep(10)
+                count += 1
             with open(f"temp/{title[:10]}.txt", "w") as file:
                 file.write(html)
         except Exception as ex:
