@@ -1,7 +1,6 @@
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
 from aiogram import Bot
-from undetected_chromedriver import Chrome, ChromeOptions
 import time
 
 from bot.misc import TgKeys, logger, config
