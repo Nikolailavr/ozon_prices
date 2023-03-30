@@ -7,14 +7,13 @@ SQLITE_DB_FILE = "db.sqlite3"
 
 # ChromeOptions
 options = webdriver.ChromeOptions()
-# options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
+options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
 options.add_argument("--disable-blink-features=AutomationControlled")
-# options.add_argument("--headless")
-# options.add_argument("--no-sandbox")  # bypass OS security model
-# options.add_argument("--disable-dev-shm-usage")  # overcome limited resource problems
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")  # bypass OS security model
+options.add_argument("--disable-dev-shm-usage")  # overcome limited resource problems
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
-
 options.headless = True
 
 # Others
