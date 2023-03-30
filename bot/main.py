@@ -22,19 +22,16 @@ async def _checking(link: Link) -> None:
     try:
         driver = Chrome(service=service, options=config.options)
         driver.set_page_load_timeout(30)
-        # options = ChromeOptions()
-        # options.headless = True
-        # driver = Chrome(use_subprocess=True, options=options)
     except Exception as ex:
         logger.error(ex)
         await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
     else:
         try:
             count = 0
-            driver.get(url=link.url)
-            html = driver.page_source
-            title = driver.title.replace(config.text_for_replace_title, "")
             while title == 'Just a moment...' and count < 12:
+                driver.get(url=link.url)
+                html = driver.page_source
+                title = driver.title.replace(config.text_for_replace_title, "")
                 print(f'Попытка №{count}')
                 time.sleep(10)
                 count += 1
