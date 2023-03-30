@@ -13,8 +13,8 @@ options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")  # bypass OS security model
 options.add_argument("--disable-dev-shm-usage")  # overcome limited resource problems
-# options.add_experimental_option("excludeSwitches", ["enable-automation"])
-# options.add_experimental_option('useAutomationExtension', False)
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option('useAutomationExtension', False)
 
 # Others
 text_for_replace_title = " - купить по выгодным ценам в интернет-магазине OZON"
