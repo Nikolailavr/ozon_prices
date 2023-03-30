@@ -46,6 +46,8 @@ async def _checking(link: Link) -> None:
                 last = html.find("₽", price_pos)
                 price_temp = html[price_pos:last].replace(find_text, "").replace(" ", "")
                 price = int(price_temp)
+                print(driver.title)
+                print(f'Цена: {price}')
                 if price != link.price:
                     if link.price != 0:
                         text = f"{title}\nСтарая цена: {link.price} руб\nНовая цена: {price} руб\n{link.url}"
