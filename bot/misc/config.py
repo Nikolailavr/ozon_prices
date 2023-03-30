@@ -17,7 +17,7 @@ options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
 
 # Others
-text_for_replace_title = " — купить в интернет-магазине OZON с быстрой доставкой"
+text_for_replace_title = " — купить в интернет-магазине OZON"
 
 # Messages
 HELP_MESSAGE = """

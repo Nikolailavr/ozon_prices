@@ -28,7 +28,7 @@ async def _checking(link: Link) -> None:
     else:
         try:
             driver.get(url=link.url)
-            time.sleep(15)
+            time.sleep(60)
             html = driver.page_source
             title = driver.title.replace(config.text_for_replace_title, "")
             print(title)
