@@ -31,7 +31,8 @@ async def _checking(link: Link) -> None:
             driver.get(url=link.url)
             html = driver.page_source
             title = driver.title.replace(config.text_for_replace_title, "")
-            while title == 'Just a moment...' or count < 12:
+            while title == 'Just a moment...' and count < 12:
+                print(f'Попытка №{count}')
                 time.sleep(10)
                 count += 1
             with open(f"temp/{title[:10]}.txt", "w") as file:
