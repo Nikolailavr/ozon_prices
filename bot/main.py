@@ -31,7 +31,8 @@ async def _checking(link: Link) -> None:
             time.sleep(1)
             html = driver.page_source
             title = driver.title.replace(config.text_for_replace_title, "")
-            print(title)
+            with open(f"temp/{title[:10]}.txt", "w") as file:
+                file.write(html)
         except Exception as ex:
             logger.error(ex)
             await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
