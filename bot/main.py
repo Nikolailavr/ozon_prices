@@ -28,10 +28,9 @@ async def _checking(link: Link) -> None:
     else:
         try:
             driver.get(url=link.url)
-            time.sleep(60)
+            time.sleep(1)
             html = driver.page_source
             title = driver.title.replace(config.text_for_replace_title, "")
-            print(title)
         except Exception as ex:
             logger.error(ex)
             await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
@@ -47,8 +46,7 @@ async def _checking(link: Link) -> None:
                 last = html.find("₽", price_pos)
                 price_temp = html[price_pos:last].replace(find_text, "").replace(" ", "")
                 price = int(price_temp)
-                print(title)
-                print(f'{title}\nЦена: {price}')
+                print(f'{title} | Цена: {price}')
                 if price != link.price:
                     if link.price != 0:
                         text = f"{title}\nСтарая цена: {link.price} руб\nНовая цена: {price} руб\n{link.url}"
