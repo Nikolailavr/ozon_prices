@@ -5,7 +5,7 @@ logger.add("./logs/log.json", format="{time} | {level} | {message}",
            level="INFO", serialize=True, rotation="1 day", compression="zip")
 
 
-def progressBar(iter, total, *, prefix='', suffix='', decimals=1, length=25, fill='█', printEnd="\r"):
+def progressBar(iter, total, *, prefix='', suffix='', decimals=2, length=25, fill='█', printEnd="\r"):
     """
     Call in a loop to create terminal progress bar
     @params:

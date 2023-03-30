@@ -1,6 +1,7 @@
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
 from aiogram import Bot
+from undetected_chromedriver import Chrome, ChromeOptions
 import time
 
 from bot.misc import TgKeys, logger, config
@@ -20,8 +21,12 @@ async def _checking(link: Link) -> None:
     title = "Just a moment..."
     service = Service(executable_path=config.driver_path)
     try:
-        driver = Chrome(service=service, options=config.options)
-        driver.set_page_load_timeout(30)
+        # driver = Chrome(service=service, options=config.options)
+        # driver = un_driver.Chrome(options=config.options)
+        # driver.set_page_load_timeout(30)
+        options = ChromeOptions()
+        options.headless = True
+        driver = Chrome(use_subprocess=True, options=options)
     except Exception as ex:
         logger.error(ex)
         await bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
