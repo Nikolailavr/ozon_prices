@@ -1,3 +1,5 @@
+import os
+
 from selenium import webdriver
 
 # Paths
@@ -14,6 +16,8 @@ options.add_argument("--headless")
 options.add_argument("--disable-dev-shm-usage")  # overcome limited resource problems
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
+proxy = os.getenv('proxy')
+options.add_argument(f"--proxy-server={proxy}")
 
 # Others
 text_for_replace_title = " - купить по выгодным ценам в интернет-магазине OZON"
