@@ -5,6 +5,7 @@ from aiogram.types import Message
 from bot.db import read_links, update_last_command
 from bot.db.main import User
 from bot.misc import config, logger
+import requests
 
 
 async def __start(msg: Message) -> None:
@@ -48,6 +49,16 @@ async def __list(msg: Message) -> None:
         await bot.send_message(chat_id=msg.from_user.id, text=result)
 
 
+async def __myip(msg: Message) -> None:
+    url = "https://ipwho.is/"
+    text = "IP адрес не найден"
+    response = requests.get(url=url)
+    if response.status_code == 200:
+        text = response.json().get('ip')
+    bot: Bot = msg.bot
+    await bot.send_message(chat_id=msg.from_user.id, text=text)
+
+
 def register_users_handlers(dp: Dispatcher) -> None:
     # region Msg handlers
     dp.register_message_handler(__start, commands=["start"])
@@ -55,6 +66,7 @@ def register_users_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(__delete, commands=["delete"])
     dp.register_message_handler(__list, commands=["list"])
     dp.register_message_handler(__help, commands=["help"])
+    dp.register_message_handler(__myip, commands=["myip"])
 
     # region Callback handlers
 
