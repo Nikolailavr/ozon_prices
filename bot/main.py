@@ -31,8 +31,8 @@ async def _checking(link: Link) -> None:
             driver.get(url=link.url)
             html = driver.page_source
             title = driver.title.replace(config.text_for_replace_title, "")
-            time.sleep(10)
-            print(title)
+            time.sleep(1)
+            # print(title)
             while (title == 'Just a moment...' or title == 'Один момент…') and count < 18:
                 print(f'Попытка №{count}')
                 time.sleep(10)
