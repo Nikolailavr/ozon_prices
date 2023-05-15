@@ -21,7 +21,12 @@ if proxy:
     options.add_argument(f"--proxy-server={proxy}")
 
 # Others
-text_for_replace_title = " - купить по выгодным ценам в интернет-магазине OZON"
+text_for_replace_title = (
+    " - купить по выгодным ценам в интернет-магазине OZON",
+    " — купить в интернет-магазине OZON с быстрой доставкой",
+    " - купить по доступным ценам в интернет-магазине OZON",
+    )
+
 
 # Messages
 HELP_MESSAGE = """

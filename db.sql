@@ -12,5 +12,6 @@ create table links (
 create table prices (
 	url_link text primary key not null,
 	price int not null DEFAULT 0,
+	price_ozon int not null DEFAULT 0,
 	FOREIGN KEY (url_link) REFERENCES links (url_link)
 );

@@ -27,8 +27,8 @@ async def __add_link(msg: Message) -> None:
         if url[-1] == "/":
             url = url[:-1]
         try:
-            await add_link(link=Link(id=msg.from_user.id, url=url, price=0))
-            await update_price(link=Link(id=msg.from_user.id, url=url, price=0))
+            await add_link(link=Link(id=msg.from_user.id, url=url))
+            await update_price(link=Link(id=msg.from_user.id, url=url))
         except Exception as ex:
             logger.error(ex)
         else:
@@ -42,7 +42,7 @@ async def __add_link(msg: Message) -> None:
 
 async def __delete_link(msg: Message) -> None:
     try:
-        await delete_link(link=Link(id=msg.from_user.id, url=msg.text, price=0))
+        await delete_link(link=Link(id=msg.from_user.id, url=msg.text))
     except Exception as ex:
         logger.error(ex)
     else:
