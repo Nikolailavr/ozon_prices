@@ -57,7 +57,7 @@ async def _check_price(html: str, title: str, link: Link) -> dict:
     text = ''
     price = _find_price(html, config.find_price)
     price_ozon = _find_price(html, config.find_price_ozon)
-    result = f'{title} | Цена: {price} р, Цена (Ozon): {price_ozon} р'  # Для отображения работы бота
+    result = f'{title} | Цена: {price} р | Цена (Ozon): {price_ozon} р'  # Для отображения работы бота
     msg_need = False
     if price != link.price or price_ozon != link.price_ozon:
         text = f"{title}\n"
