@@ -27,6 +27,10 @@ text_for_replace_title = (
     " - купить по доступным ценам в интернет-магазине OZON",
     )
 
+# Finding text by html
+find_price = ('id="state-webPrice', '&quot;price&quot;:&quot;')
+find_price_ozon = ('<div id="state-webOzonAccountPrice', '&quot;priceText&quot;:&quot;')
+
 
 # Messages
 HELP_MESSAGE = """
