@@ -4,7 +4,7 @@ from aiogram.types import Message
 
 from bot.db import read_links, update_last_command
 from bot.db.main import User
-from bot.misc import config, logger
+from bot.misc import config, logger, TgKeys
 import requests
 
 
@@ -50,13 +50,14 @@ async def __list(msg: Message) -> None:
 
 
 async def __myip(msg: Message) -> None:
-    url = "https://ipwho.is/"
-    text = "IP адрес не найден"
-    response = requests.get(url=url)
-    if response.status_code == 200:
-        text = response.json().get('ip')
-    bot: Bot = msg.bot
-    await bot.send_message(chat_id=msg.from_user.id, text=text)
+    if msg.from_user.id == TgKeys.admin_chatID:
+        url = "https://ipwho.is/"
+        text = "IP адрес не найден"
+        response = requests.get(url=url)
+        if response.status_code == 200:
+            text = response.json().get('ip')
+        bot: Bot = msg.bot
+        await bot.send_message(chat_id=msg.from_user.id, text=text)
 
 
 def register_users_handlers(dp: Dispatcher) -> None:
