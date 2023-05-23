@@ -50,7 +50,7 @@ async def __list(msg: Message) -> None:
 
 
 async def __myip(msg: Message) -> None:
-    if msg.from_user.id == TgKeys.admin_chatID:
+    if str(msg.from_user.id) == TgKeys.admin_chatID:
         url = "https://ipwho.is/"
         text = "IP адрес не найден"
         response = requests.get(url=url)
