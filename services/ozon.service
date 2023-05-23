@@ -1,0 +1,12 @@
+[Unit]
+Description=Ozon service
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/home/lnv/soft/ozon_prices/venv/bin/python3 /home/lnv/soft/ozon_prices/run.py
+WorkingDirectory=/home/lnv/soft/ozon_prices
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
