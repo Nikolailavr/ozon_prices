@@ -31,7 +31,8 @@ class Monitoring:
             driver.set_page_load_timeout(120)
         except Exception as ex:
             logger.error(ex)
-            await self.bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
+            await self.bot.send_message(chat_id=TgKeys.admin_chatID,
+                                        text=f"[ERR] {ex}")
         else:
             try:
                 driver.get(url=link.url)
@@ -39,19 +40,25 @@ class Monitoring:
                 # Убираем все лишнее из заголовка
                 for each in config.text_for_replace_title:
                     title = title.replace(each, "")
-                price_element = driver.find_element(By.ID, value='state-webPrice-3121879-default-1')
+                price_element = driver.find_element(
+                    By.ID,
+                    value='state-webPrice-3121879-default-1'
+                )
                 attr = price_element.get_attribute('data-state')
                 data_state = json.loads(attr)
             except Exception as ex:
                 logger.error(ex)
-                await self.bot.send_message(chat_id=TgKeys.admin_chatID, text=f"[ERR] {ex}")
+                await self.bot.send_message(chat_id=TgKeys.admin_chatID,
+                                            text=f"[ERR] {ex}")
             finally:
                 driver.close()
                 driver.quit()
             # Find prices of items
-            price_dict = await self._check_price(data_state, title=title, link=link)
+            price_dict = await self._check_price(data_state, title=title,
+                                                 link=link)
             if price_dict['msg_need']:
-                await self.bot.send_message(chat_id=link.id, text=price_dict['text'])
+                await self.bot.send_message(chat_id=link.id,
+                                            text=price_dict['text'])
             print(price_dict['result'])  # Вывод в консоль результата поиска
 
     async def _check_price(self, state: dict, title: str, link: Link):
@@ -60,15 +67,19 @@ class Monitoring:
         price_ozon = self.get_only_digits(price_ozon)
         price = state.get('price', '0')
         price = self.get_only_digits(price)
-        result = f'{title} | Цена: {price} р | Цена (Ozon): {price_ozon} р'  # Для отображения работы бота
+        # Для отображения работы бота
+        result = f'{title} | Цена: {price} р | Цена (Ozon): {price_ozon} р'
         msg_need = False
-        if price != link.price or price_ozon != link.price_ozon:
+        if (price != link.price and price != 0) or \
+           (price_ozon != link.price_ozon and price_ozon != 0):
             text = f"{title}\n"
-            if link.price != 0:  # Только при реальном изменении цены отправляем сообщение
-                text += f"Старая цена: {link.price} руб\nНовая цена: {price} руб\n"
+            if link.price != 0:  # при изменении цены отправляем сообщение
+                text += f"Старая цена: {link.price} руб\n" \
+                        f"Новая цена: {price} руб\n"
                 msg_need = True
-            if link.price_ozon != 0:  # Только при реальном изменении цены отправляем сообщение
-                text += f"Старая цена (Ozon): {link.price_ozon} руб\nНовая цена (Ozon): {price_ozon} руб\n"
+            if link.price_ozon != 0:  # при изменении цены отправляем сообщение
+                text += f"Старая цена (Ozon): {link.price_ozon} руб\n" \
+                        f"Новая цена (Ozon): {price_ozon} руб\n"
                 msg_need = True
             text += f"{link.url}"
             link.price = price
