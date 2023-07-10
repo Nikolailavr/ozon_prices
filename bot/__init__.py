@@ -1,2 +1,2 @@
-from .main import start_checking
+from .main import Monitoring
 from .bot_main import start_bot

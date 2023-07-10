@@ -10,3 +10,4 @@ bot/db/tables/__pycache__
 bot/handlers/__pycache__
 bot/user/__pycache__
 bot/misc/__pycache__
+.env

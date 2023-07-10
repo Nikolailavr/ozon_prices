@@ -32,7 +32,6 @@ text_for_replace_title = (
 find_price = ('id="state-webPrice', '&quot;price&quot;:&quot;')
 find_price_ozon = ('<div id="state-webOzonAccountPrice', '&quot;priceText&quot;:&quot;')
 
-
 # Messages
 HELP_MESSAGE = """
 Доступные команды бота:
