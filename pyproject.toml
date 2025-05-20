@@ -1,0 +1,17 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+alembic = "^1.15.2"
+pydantic = {extras = ["email"], version = "^2.11.2"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.40"}
+asyncpg = "^0.30.0"
+aiogram = "^3.20.0.post0"
+pydantic-settings = "^2.8.1"
+requests = "^2.32.3"
+undetected-chromedriver = "^3.5.5"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"

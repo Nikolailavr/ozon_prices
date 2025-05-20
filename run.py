@@ -1,7 +1,7 @@
 import asyncio
 
-from bot.misc import waitBar, logger
-from bot import Monitoring
+from src.bot.misc import waitBar, logger
+from src.bot import Monitoring
 
 
 if __name__ == '__main__':
