@@ -13,23 +13,21 @@ logger = logging.getLogger(__name__)
 class Parser:
     def __init__(self):
         self.driver_options = uc.ChromeOptions()
-        # self._configure_driver_options()
-
-    def _configure_driver_options(self):
-        """Настройка опций для драйвера с использованием Chromium"""
-        # Указываем путь к исполняемому файлу Chromium
-        self.driver_options.binary_location = "/usr/bin/chromium"
-
-        # self.driver_options.add_argument("--headless=new")
-        # self.driver_options.add_argument(
-        #     "--disable-blink-features=AutomationControlled"
-        # )
-        # self.driver_options.add_argument("--window-size=1920,1080")
-        #
-        # # Дополнительные аргументы для лучшей маскировки
-        # self.driver_options.add_argument("--disable-gpu")
-        # self.driver_options.add_argument("--no-sandbox")
-        # self.driver_options.add_argument("--disable-dev-shm-usage")
+        self.driver_options.add_argument(
+            "user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
+        )
+        self.driver_options.add_argument("--no-sandbox")  # bypass OS security model
+        self.driver_options.add_argument(
+            "--disable-blink-features=AutomationControlled"
+        )
+        self.driver_options.add_argument("--headless")
+        self.driver_options.add_argument(
+            "--disable-dev-shm-usage"
+        )  # overcome limited resource problems
+        self.driver_options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"]
+        )
+        self.driver_options.add_experimental_option("useAutomationExtension", False)
 
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""

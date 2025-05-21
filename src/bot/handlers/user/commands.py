@@ -2,9 +2,10 @@ import logging
 from aiogram import Router, F, Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
-from src.bot.db import read_links, update_last_command
-from src.bot.db.main import User
-from src.bot.misc import config, TgKeys
+
+from core import settings
+from core.services import UserService
+from core.services.subscribes.subscribe_service import SubscribeService
 import requests
 
 logger = logging.getLogger(__name__)
@@ -13,48 +14,52 @@ router = Router()
 
 @router.message(Command("start"))
 async def __start(msg: Message) -> None:
-    text = f"Привет, <b>{msg.from_user.first_name}</b>!\n{config.HELP_MESSAGE}"
+    text = f"Привет, <b>{msg.from_user.first_name}</b>!\n{settings.msg.HELP_MESSAGE}"
     await msg.answer(text)
-    await update_last_command(User(id=msg.from_user.id, command=""))
+    await UserService.get_or_create_user(telegram_id=msg.from_user.id)
 
 
 @router.message(Command("help"))
 async def __help(msg: Message) -> None:
-    await msg.answer(config.HELP_MESSAGE)
-    await update_last_command(User(id=msg.from_user.id, command=""))
+    await msg.answer(settings.msg.HELP_MESSAGE)
 
 
 @router.message(Command("add"))
 async def __add(msg: Message) -> None:
-    with open(config.example_url, "rb") as photo:
-        await msg.answer_photo(photo=photo, caption=config.CAPTION_EX_URL)
-    await msg.answer(config.MSG_ADD)
-    await update_last_command(User(id=msg.from_user.id, command="/add"))
+    with open(settings.parser.example_url, "rb") as photo:
+        await msg.answer_photo(photo=photo, caption=settings.msg.CAPTION_EX_URL)
+    await msg.answer(settings.msg.MSG_ADD)
+    await UserService.update_last_command(
+        telegram_id=msg.from_user.id,
+        command="/add",
+    )
 
 
 @router.message(Command("delete"))
 async def __delete(msg: Message) -> None:
-    await msg.answer(config.MSG_DELETE)
-    await update_last_command(User(id=msg.from_user.id, command="/delete"))
+    await msg.answer(settings.msg.MSG_DELETE)
+    await UserService.update_last_command(
+        telegram_id=msg.from_user.id,
+        command="/delete",
+    )
 
 
 @router.message(Command("list"))
 async def __list(msg: Message) -> None:
-    await update_last_command(User(id=msg.from_user.id, command=""))
     result = "Список url из вашей подписки:\n\n"
     try:
-        links = await read_links(telegram_id=msg.from_user.id)
+        subs = await SubscribeService.get_all(telegram_id=msg.from_user.id)
     except Exception as ex:
         logger.error(ex)
     else:
-        for index, link in enumerate(links, 1):
-            result += f"{index}. {link.url}\n"
+        for index, item in enumerate(subs, 1):
+            result += f"{index}. {item.url}\n"
         await msg.answer(result)
 
 
 @router.message(Command("myip"))
 async def __myip(msg: Message) -> None:
-    if str(msg.from_user.id) == TgKeys.admin_chatID:
+    if str(msg.from_user.id) == settings.telegram.admin_chat_id:
         url = "https://ipwho.is/"
         text = "IP адрес не найден"
         response = requests.get(url=url)

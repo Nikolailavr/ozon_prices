@@ -1,42 +1,28 @@
 from core.database import db_helper
-from core.database.models.links import Link, Price
-from core.database.DAL import links_crud, prices_crud
+from core.database.models.links import Link, Subscribe
+from core.database.DAL import link_crud, subscribe_crud
+from core.database.schemas.links import SubscribeCreate
 
 
 class LinkService:
     @staticmethod
-    async def add_user_link(
-        telegram_id: int,
-        url: str,
-        initial_price: int = 0,
-        initial_ozon_price: int = 0,
-    ) -> tuple[Link, Price]:
+    async def add_subscribe(subscribe: SubscribeCreate) -> tuple[Link, Subscribe]:
         async with db_helper.get_session() as session:
-            link = await links_crud.create_link(
-                session,
-                telegram_id,
-                url,
-            )
-            price = await prices_crud.create_or_update_price(
-                session,
-                url,
-                initial_price,
-                initial_ozon_price,
-            )
-            return link, price
+            link = await subscribe_crud.create(session, subscribe)
+            return link
 
     @staticmethod
     async def get_user_links_with_prices(
         telegram_id: int,
-    ) -> list[tuple[Link, Price]]:
+    ) -> list[tuple[Link, Subscribe]]:
         async with db_helper.get_session() as session:
-            links = await links_crud.get_user_links(
+            links = await link_crud.get_user_links(
                 session,
                 telegram_id,
             )
             result = []
             for link in links:
-                price = await prices_crud.get_price(
+                price = await link_crud.get_price(
                     session,
                     link.url_link,
                 )
@@ -49,9 +35,9 @@ class LinkService:
         url: str,
         price: int | None = None,
         price_ozon: int | None = None,
-    ) -> Price | None:
+    ) -> Link | None:
         async with db_helper.get_session() as session:
-            return await prices_crud.update_price(
+            return await link_crud.update_price(
                 session,
                 url,
                 price,
@@ -61,4 +47,7 @@ class LinkService:
     @staticmethod
     async def delete_user_link(url: str) -> bool:
         async with db_helper.get_session() as session:
-            return await links_crud.delete_link(session, url)
+            return await link_crud.delete_link(session, url)
+
+
+link_service = LinkService()

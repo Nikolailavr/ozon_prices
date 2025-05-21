@@ -4,12 +4,11 @@ import asyncio
 from src.bot.handlers import register_all_handlers
 from core import settings
 
+bot = Bot(token=settings.telegram.token, parse_mode="HTML")
+dp = Dispatcher(storage=MemoryStorage())
 
-async def main():
-    # Инициализация бота и диспетчера
-    bot = Bot(token=settings.telegram.token, parse_mode="HTML")
-    dp = Dispatcher(storage=MemoryStorage())
 
+async def start_bot():
     # Регистрация обработчиков
     register_all_handlers(dp)
 
@@ -17,5 +16,9 @@ async def main():
     await dp.start_polling(bot, skip_updates=True)
 
 
+def run():
+    asyncio.run(start_bot())
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    run()

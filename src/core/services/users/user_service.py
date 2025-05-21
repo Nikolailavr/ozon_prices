@@ -20,3 +20,6 @@ class UserService:
                 telegram_id=telegram_id,
                 command=command,
             )
+
+
+# user_service = UserService()

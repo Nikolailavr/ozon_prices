@@ -14,9 +14,10 @@ class Checker:
         """
         Обработка изменений цены
         """
-        result = f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
         if self._price_changed(link, link_old):
-            logger.info(result)
+            logger.info(
+                f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
+            )
             return link
         else:
             return None

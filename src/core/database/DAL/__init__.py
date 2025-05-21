@@ -1,9 +1,9 @@
 __all__ = (
     "user_crud",
-    "links_crud",
-    "prices_crud",
+    "link_crud",
+    "subscribe_crud",
 )
 
 from core.database.DAL.user_dal import user_crud
-from core.database.DAL.links_dal import links_crud
-from core.database.DAL.prices_dal import prices_crud
+from core.database.DAL.subscribe_dal import subscribe_crud
+from core.database.DAL.link_dal import link_crud

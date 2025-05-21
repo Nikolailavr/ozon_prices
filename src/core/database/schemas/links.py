@@ -26,3 +26,7 @@ class LinkBase(BaseModel):
             return int(value.replace(" ", "").replace("₽", "").strip())
         except (AttributeError, ValueError) as e:
             raise ValueError(f"Invalid price format: {value}") from e
+
+
+class LinkCreate(BaseModel):
+    url: str

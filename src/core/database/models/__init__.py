@@ -7,4 +7,5 @@ __all__ = (
 
 from .base import Base
 from .users import User
-from .links import Link, Subscribe
+from .links import Link
+from .subscribes import Subscribe

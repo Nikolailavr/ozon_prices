@@ -1,13 +1,13 @@
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models.links import Price
+from core.database.models.links import Link
 
 
-class PriceCRUD:
+class LinkCRUD:
     @staticmethod
-    async def get_price(session: AsyncSession, url: str) -> Price | None:
-        stmt = select(Price).where(Price.url_link == url)
+    async def get_price(session: AsyncSession, url: str) -> Link | None:
+        stmt = select(Link).where(Link.url == url)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -17,7 +17,7 @@ class PriceCRUD:
         url: str,
         price: int | None = None,
         price_ozon: int | None = None,
-    ) -> Price | None:
+    ) -> Link | None:
         values = {}
         if price is not None:
             values["price"] = price
@@ -27,9 +27,7 @@ class PriceCRUD:
         if not values:
             return None
 
-        stmt = (
-            update(Price).where(Price.url_link == url).values(**values).returning(Price)
-        )
+        stmt = update(Link).where(Link.url == url).values(**values).returning(Link)
         result = await session.execute(stmt)
         await session.commit()
         return result.scalar_one_or_none()
@@ -40,16 +38,16 @@ class PriceCRUD:
         url: str,
         price: int = 0,
         price_ozon: int = 0,
-    ) -> Price:
+    ) -> Link:
         existing = await self.get_price(url)
         if existing:
             return await self.update_price(url, price, price_ozon)
 
-        price_obj = Price(url_link=url, price=price, price_ozon=price_ozon)
+        price_obj = Link(url=url, price=price, price_ozon=price_ozon)
         session.add(price_obj)
         await session.commit()
         await session.refresh(price_obj)
         return price_obj
 
 
-prices_crud = PriceCRUD()
+link_crud = LinkCRUD()

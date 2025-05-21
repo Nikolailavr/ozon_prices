@@ -6,6 +6,7 @@ from pydantic import BaseModel, PostgresDsn, field_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+ChromePath = Path(__file__).resolve().parent
 
 LOG_DEFAULT_FORMAT = (
     "[%(asctime)s] | %(module)20s:%(lineno)-3d | %(levelname)-8s - %(message)s"
@@ -63,8 +64,28 @@ class Parser(BaseModel):
         '<div id="state-webOzonAccountPrice',
         "&quot;priceText&quot;:&quot;",
     )
-    driver_path: str = "/home/lnv/soft/ozon_prices/chrome/chromedriver"
-    example_url: str = "/home/lnv/soft/ozon_prices/bot/misc/example_url.png"
+    driver_path: str = ChromePath / "chrome/chromedriver"
+    example_url: str = BASE_DIR / "misc/example_url.png"
+
+
+class Messages(BaseModel):
+    HELP_MESSAGE: str = """
+    Доступные команды бота:
+    /help - показать список доступных команд
+    /add - добавить новый url для подписки
+    /list - показать список url в подписке
+    /delete - удалить url из подписки
+    """
+    MSG_ADD: str = """Чтобы добавить новый url в подписку отправьте его в сообщении"""
+    MSG_DELETE: str = """Чтобы удалить url из подписки отправьте его в сообщении"""
+    BAD_MSG: str = "Я вас не понял, чтобы кзнать доступные команды наберите /help"
+    BAD_URL: str = """Ваш url имеет неверный формат, пожалуйста, убедитесь что вы правильно скопировали ссылку на товар.
+    Ваша ссылка должна начинаться с https://www.ozon.ru/product/"""
+    GOOD_URL: str = """Ваш url успешно добавлен в подписку!"""
+    GOOD_DELETE: str = """Ваш url успешно удален из подписки!"""
+    CAPTION_EX_URL: str = (
+        """Пример как правильно скопировать url (выделено синим цветом)"""
+    )
 
 
 class Settings(BaseSettings):
@@ -81,6 +102,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig = DatabaseConfig()
     telegram: Telegram = Telegram()
     parser: Parser = Parser()
+    msg: Messages = Messages()
 
     @field_validator("db", "telegram", mode="before")
     def validate_required_fields(cls, v):
