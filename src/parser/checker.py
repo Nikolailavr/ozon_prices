@@ -28,6 +28,7 @@ class Checker:
             logger.info(
                 f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
             )
+            await LinkService.update(link)
             return link
         else:
             return None
