@@ -59,7 +59,7 @@ class Parser:
             driver.set_page_load_timeout(120)
             return driver
 
-    async def _get_url_data(self, url: str) -> LinkBase:
+    async def _get_url_data(self, url: str) -> LinkBase | None:
         driver = self._driver_run()
         try:
             driver.get(url)
@@ -78,7 +78,10 @@ class Parser:
             )
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")
-            # await self._notify_admin(f"[ERR] {link}: {ex}")
+            await send_msg(
+                chat_id=settings.telegram.admin_chat_id,
+                text=f"Error get data from url {url}: {ex}",
+            )
             return None
 
     @staticmethod

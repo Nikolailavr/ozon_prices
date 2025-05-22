@@ -2,8 +2,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-import asyncio
-from src.bot.handlers import register_all_handlers
+from bot.handlers import register_all_handlers
 from core import settings
 
 logger = logging.getLogger(__name__)
@@ -25,11 +24,3 @@ async def start_bot():
 
     # Запуск поллинга
     await dp.start_polling(bot, skip_updates=True)
-
-
-def run():
-    asyncio.run(start_bot())
-
-
-if __name__ == "__main__":
-    run()

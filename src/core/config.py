@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 LOG_DEFAULT_FORMAT = (
-    "[%(asctime)s] | %(module)20s:%(lineno)-3d | %(levelname)-8s - %(message)s"
+    "[%(asctime)s] | %(module)20s:%(lineno)-4d | %(levelname)-8s - %(message)s"
 )
 
 
@@ -79,6 +79,10 @@ class Messages(BaseModel):
     )
 
 
+class Schedule(BaseModel):
+    interval: int
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(
@@ -94,6 +98,7 @@ class Settings(BaseSettings):
     telegram: Telegram
     parser: Parser = Parser()
     msg: Messages = Messages()
+    schedule: Schedule
 
 
 settings = Settings()
