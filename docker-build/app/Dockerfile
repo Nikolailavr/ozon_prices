@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
-RUN pip install --upgrade pip wheel "poetry==2.1"
+RUN pip install --upgrade pip wheel "poetry==2.1" setuptools
 
 RUN poetry config virtualenvs.create false
 
