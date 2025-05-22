@@ -1,35 +1,32 @@
 import logging
 
-from core.database.schemas.links import LinkBase
+from core.database.schemas import LinkBase
+from core.services import LinkService
 
 logger = logging.getLogger(__name__)
 
 
 class Checker:
-    async def check(
-        self,
+    @staticmethod
+    async def check_price_changing(
         link: LinkBase,
-        link_old: LinkBase,
     ) -> LinkBase | None:
         """
         Обработка изменений цены
         """
-        if self._price_changed(link, link_old):
+        link_db = await LinkService.get(link.url)
+        if link_db is None:
+            await LinkService.create(link)
+            return None
+        # Check changing price
+        condition = (
+            link_db.price != link.price and link.price != 0,
+            link_db.ozon_price != link.ozon_price and link.ozon_price != 0,
+        )
+        if any(condition):
             logger.info(
                 f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
             )
             return link
         else:
             return None
-
-    @staticmethod
-    def _price_changed(
-        link: LinkBase,
-        link_old: LinkBase,
-    ) -> bool:
-        """
-        Проверка изменения цены
-        """
-        return (link_old.price != link.price and link.price != 0) or (
-            link_old.old_price != link.old_price and link.old_price != 0
-        )

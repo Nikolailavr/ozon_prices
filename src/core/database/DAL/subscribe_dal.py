@@ -15,8 +15,20 @@ class SubscribeCRUD:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(session: AsyncSession, telegram_id: int) -> list[Subscribe]:
-        stmt = select(Subscribe).where(Subscribe.telegram_id == telegram_id)
+    async def get_all(
+        session: AsyncSession,
+        *,
+        active: bool = None,
+        telegram_id: int = None,
+        url: str = None,
+    ) -> list[Subscribe]:
+        stmt = select(Subscribe)
+        if active:
+            stmt = select(Subscribe).where(Subscribe.active == active)
+        if telegram_id:
+            stmt = select(Subscribe).where(Subscribe.telegram_id == telegram_id)
+        if url:
+            stmt = select(Subscribe).where(Subscribe.url == url)
         result = await session.execute(stmt)
         return list(result.scalars().all())
 

@@ -13,12 +13,17 @@ class SubscribeService:
 
     @staticmethod
     async def get_all(
-        telegram_id: int,
+        *,
+        telegram_id: int = None,
+        url: str = None,
+        active: bool = None,
     ) -> list[Subscribe]:
         async with db_helper.get_session() as session:
             subscribes = await subscribe_crud.get_all(
-                session,
-                telegram_id,
+                session=session,
+                telegram_id=telegram_id,
+                url=url,
+                active=active,
             )
             return subscribes
 

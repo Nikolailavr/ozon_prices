@@ -1,11 +1,22 @@
+import logging
+
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 import asyncio
 from src.bot.handlers import register_all_handlers
 from core import settings
 
-bot = Bot(token=settings.telegram.token, parse_mode="HTML")
+logger = logging.getLogger(__name__)
+
+bot = Bot(token=settings.telegram.token)
 dp = Dispatcher(storage=MemoryStorage())
+
+
+async def send_msg(
+    chat_id: int,
+    text: str,
+):
+    await bot.send_message(chat_id=chat_id, text=text)
 
 
 async def start_bot():

@@ -1,8 +1,8 @@
-from src.bot import start_bot
+from src.bot import run
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
-        start_bot()
+        run()
     except Exception as ex:
         raise ex

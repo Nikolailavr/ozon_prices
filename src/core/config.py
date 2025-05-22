@@ -2,11 +2,10 @@ import logging
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, PostgresDsn, field_validator, Field
+from pydantic import BaseModel, PostgresDsn, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-ChromePath = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 LOG_DEFAULT_FORMAT = (
     "[%(asctime)s] | %(module)20s:%(lineno)-3d | %(levelname)-8s - %(message)s"
@@ -29,9 +28,7 @@ class LoggingConfig(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    url: PostgresDsn = Field(
-        default="postgresql+asyncpg://user:password@localhost:5432/ozonprices"
-    )
+    url: PostgresDsn
     echo: bool = False
     echo_pool: bool = False
     max_overflow: int = 10
@@ -47,8 +44,8 @@ class DatabaseConfig(BaseModel):
 
 
 class Telegram(BaseModel):
-    token: str = ""
-    admin_chat_id: int = 0
+    token: str
+    admin_chat_id: int
 
 
 class Parser(BaseModel):
@@ -58,14 +55,8 @@ class Parser(BaseModel):
         " - купить по доступным ценам в интернет-магазине OZON",
         " - купить по выгодной цене в интернет-магазине OZON",
     )
-    # Finding text by html
-    find_price: tuple[str] = ('id="state-webPrice', "&quot;price&quot;:&quot;")
-    find_price_ozon: tuple[str] = (
-        '<div id="state-webOzonAccountPrice',
-        "&quot;priceText&quot;:&quot;",
-    )
-    driver_path: str = ChromePath / "chrome/chromedriver"
-    example_url: str = BASE_DIR / "misc/example_url.png"
+    driver_path: str = BASE_DIR / "chrome/chromedriver"
+    example_url: str = BASE_DIR / "src/misc/example_url.png"
 
 
 class Messages(BaseModel):
@@ -99,16 +90,16 @@ class Settings(BaseSettings):
         env_prefix="APP_CONFIG__",
     )
     logging: LoggingConfig = LoggingConfig()
-    db: DatabaseConfig = DatabaseConfig()
-    telegram: Telegram = Telegram()
+    db: DatabaseConfig
+    telegram: Telegram
     parser: Parser = Parser()
     msg: Messages = Messages()
 
-    @field_validator("db", "telegram", mode="before")
-    def validate_required_fields(cls, v):
-        if not v:
-            raise ValueError("Configuration is required")
-        return v
-
 
 settings = Settings()
+
+# Logging
+logging.basicConfig(
+    level=settings.logging.log_level_value,
+    format=settings.logging.log_format,
+)

@@ -26,8 +26,10 @@ async def __help(msg: Message) -> None:
 
 @router.message(Command("add"))
 async def __add(msg: Message) -> None:
-    with open(settings.parser.example_url, "rb") as photo:
-        await msg.answer_photo(photo=photo, caption=settings.msg.CAPTION_EX_URL)
+    # await msg.answer_photo(
+    #     photo=settings.parser.example_url,
+    #     caption=settings.msg.CAPTION_EX_URL,
+    # )
     await msg.answer(settings.msg.MSG_ADD)
     await UserService.update_last_command(
         telegram_id=msg.from_user.id,
@@ -48,7 +50,7 @@ async def __delete(msg: Message) -> None:
 async def __list(msg: Message) -> None:
     result = "Список url из вашей подписки:\n\n"
     try:
-        subs = await SubscribeService.get_all(telegram_id=msg.from_user.id)
+        subs = await SubscribeService.get_all_by_id(telegram_id=msg.from_user.id)
     except Exception as ex:
         logger.error(ex)
     else:

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.database.models.base import Base
 
 if TYPE_CHECKING:
-    from core.database.models.users import User, Link
+    from core.database.models import User, Link
 
 
 class Subscribe(Base):
@@ -16,5 +16,5 @@ class Subscribe(Base):
     url: Mapped[str] = mapped_column(Text, primary_key=True, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    user: Mapped["User"] = relationship(back_populates="subscribe")
-    price: Mapped["Link"] = relationship(back_populates="link")
+    users: Mapped["User"] = relationship(back_populates="subscribes")
+    links: Mapped["Link"] = relationship(back_populates="subscribes")

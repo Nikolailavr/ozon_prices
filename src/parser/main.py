@@ -1,8 +1,13 @@
-from .parser import Parser
-from .checker import Checker
+import asyncio
+
+from src.parser.parser import Parser
 
 parser = Parser()
-checker = Checker()
 
-def main():
-    parser.check()
+
+async def main():
+    await parser.start_checking()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

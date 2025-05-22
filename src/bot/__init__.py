@@ -1,1 +1,1 @@
-from .bot_main import run
+from .bot_main import run, send_msg

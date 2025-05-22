@@ -1,19 +1,24 @@
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncEngine,
+    async_sessionmaker,
+    AsyncSession,
+)
 
 from core import settings
 
 
 class DatabaseHelper:
     def __init__(
-            self,
-            url: str,
-            echo: bool = False,
-            echo_pool: bool = False,
-            max_overflow: int = 10,
-            pool_size: int = 5,
-
+        self,
+        url: str,
+        echo: bool = False,
+        echo_pool: bool = False,
+        max_overflow: int = 10,
+        pool_size: int = 5,
     ):
         self.engine: AsyncEngine = create_async_engine(
             url=url,
@@ -32,9 +37,20 @@ class DatabaseHelper:
     async def dispose(self):
         await self.engine.dispose()
 
+    # async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+    #     async with self.session_factory() as session:
+    #         yield session
+
+    @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
-        async with self.session_factory() as session:
+        session = self.session_factory()
+        try:
             yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 db_helper = DatabaseHelper(
@@ -42,5 +58,5 @@ db_helper = DatabaseHelper(
     echo=settings.db.echo,
     echo_pool=settings.db.echo_pool,
     max_overflow=settings.db.max_overflow,
-    pool_size=settings.db.pool_size
+    pool_size=settings.db.pool_size,
 )

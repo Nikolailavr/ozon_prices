@@ -16,18 +16,19 @@ async def other_messages(msg: Message, bot: Bot) -> None:
     """
     Обработка всех текстовых сообщений
     """
-    match msg.text:
+    user = await UserService.get_or_create_user(telegram_id=msg.from_user.id)
+    match user.last_command:
         case "/add":
             await handle_add_link(msg, bot)
             await UserService.update_last_command(
                 telegram_id=msg.from_user.id,
-                command=msg.text,
+                command="",
             )
         case "/delete":
             await handle_delete_link(msg, bot)
             await UserService.update_last_command(
                 telegram_id=msg.from_user.id,
-                command=msg.text,
+                command="",
             )
         case _:
             await msg.answer(settings.msg.BAD_MSG)
