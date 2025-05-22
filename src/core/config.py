@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, PostgresDsn, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 LOG_DEFAULT_FORMAT = (
     "[%(asctime)s] | %(module)20s:%(lineno)-4d | %(levelname)-8s - %(message)s"
@@ -56,7 +56,7 @@ class Parser(BaseModel):
         " - купить по выгодной цене в интернет-магазине OZON",
     )
     driver_path: str = BASE_DIR / "chrome/chromedriver"
-    example_url: str = BASE_DIR / "src/misc/example_url.png"
+    example_url: str = BASE_DIR / "misc/example_url.png"
 
 
 class Messages(BaseModel):

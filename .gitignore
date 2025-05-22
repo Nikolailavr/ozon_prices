@@ -10,4 +10,4 @@ src/bot/db/tables/__pycache__
 src/bot/handlers/__pycache__
 src/bot/user/__pycache__
 src/bot/misc/__pycache__
-.env
+src/.env
