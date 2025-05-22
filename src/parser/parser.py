@@ -17,23 +17,45 @@ logger = logging.getLogger(__name__)
 class Parser:
     def __init__(self):
         self.options = uc.ChromeOptions()
-        # self.options.add_argument(
-        #     "user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
-        # )
-        # self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        # Основные настройки
+        self.options.add_argument("--disable-blink-features=AutomationControlled")
+        self.options.add_argument("--no-sandbox")
+        self.options.add_argument("--disable-dev-shm-usage")
 
-        # self.options.add_argument("--no-sandbox")
-        # self.options.add_argument("--disable-blink-features=AutomationControlled")
-        # self.options.add_argument("--headless")
-        # self.options.add_argument("--disable-dev-shm-usage")
-        # self.options.add_experimental_option("useAutomationExtension", False)
+        # Настройки для маскировки
+        self.options.add_argument("--disable-infobars")
+        self.options.add_argument("--disable-extensions")
+
+        # Обязательные параметры для headless
+        # self.options.add_argument("--headless=new")
+        self.options.add_argument("--no-sandbox")
+        self.options.add_argument("--disable-dev-shm-usage")
+        self.options.add_argument("--disable-gpu")
+
+        # Разрешение экрана (важно для корректного рендеринга)
+        self.options.add_argument("--window-size=1920,1080")
+
+        # Параметры для экономии ресурсов
+        self.options.add_argument("--disable-software-rasterizer")
+        self.options.add_argument("--disable-setuid-sandbox")
+
+        # Отключение кэша (опционально)
+        self.options.add_argument("--disk-cache-size=0")
+        self.options.add_argument("--media-cache-size=0")
+
+        # Реалистичный user-agent
+        self.options.add_argument(
+            "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
 
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""
         try:
             links = await SubscribeService.get_all(active=True)
-            tasks = [self.check(link.url) for link in links]
-            await asyncio.gather(*tasks)
+            self._driver_run()
+            for link in links:
+                await self.check(link.url)
+            self.driver.quit()
         except Exception as ex:
             logger.error(ex)
 
@@ -51,26 +73,28 @@ class Parser:
                     )
 
     def _driver_run(self):
-        with uc.Chrome(
-            options=self.options,
-            browser_executable_path="/usr/bin/chromium",
-        ) as driver:
-            driver.implicitly_wait(5)
-            driver.set_page_load_timeout(120)
-            return driver
+        try:
+            self.driver = uc.Chrome(
+                driver_executable_path=settings.parser.driver_path,
+                options=self.options,
+                browser_executable_path="/usr/bin/chromium",
+                use_subprocess=False,
+            )
+            self.driver.implicitly_wait(5)
+            self.driver.set_page_load_timeout(120)
+        except Exception as ex:
+            logger.error("Error in run driver")
 
     async def _get_url_data(self, url: str) -> LinkBase | None:
-        driver = self._driver_run()
         try:
-            driver.get(url)
+            self.driver.get(url)
             await asyncio.sleep(1)
-            title = self._clean_title(driver.title)
-            price_element = driver.find_element(
+            title = self._clean_title(self.driver.title)
+            price_element = self.driver.find_element(
                 By.ID, value="state-webPrice-3121879-default-1"
             )
             attr = price_element.get_attribute("data-state")
             logger.info(f"{attr=}")
-            driver.close()
             return self.__unzip_price_data(
                 attr=json.loads(attr),
                 title=title,

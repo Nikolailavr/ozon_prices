@@ -25,7 +25,7 @@ def run_scheduler():
     scheduler.add_job(
         parser.start_checking,
         "interval",
-        minutes=settings.schedule.interval,
+        hours=settings.schedule.interval,
     )
     try:
         scheduler.start()
