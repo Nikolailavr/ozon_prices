@@ -4,7 +4,6 @@ services:
       dockerfile: ./docker-build/app/Dockerfile
       context: ./
     environment:
-      APP_CONFIG__DB__URL: postgresql+asyncpg://user:password@pg:5432/ozonprices
       APP_CONFIG__DB__ECHO: 0
     ports:
       - "8000:8000"
@@ -20,7 +19,7 @@ services:
           path: ./poetry.lock
 
   pg:
-    image: postgres:16.4
+    image: postgres:16.9
     environment:
       POSTGRES_DB: ozonprices
       POSTGRES_USER: user
@@ -36,17 +35,17 @@ services:
       timeout: 3s
       retries: 3
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.org
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
-    depends_on:
-      pg:
-        condition: service_healthy
+#  pgadmin:
+#    image: dpage/pgadmin4
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: admin@admin.org
+#      PGADMIN_DEFAULT_PASSWORD: admin
+#      PGADMIN_CONFIG_SERVER_MODE: 'False'
+#    ports:
+#      - "5050:80"
+#    depends_on:
+#      pg:
+#        condition: service_healthy
 
 volumes:
   pgdata:

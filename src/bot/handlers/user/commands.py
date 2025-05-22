@@ -50,7 +50,7 @@ async def __delete(msg: Message) -> None:
 async def __list(msg: Message) -> None:
     result = "Список url из вашей подписки:\n\n"
     try:
-        subs = await SubscribeService.get_all_by_id(telegram_id=msg.from_user.id)
+        subs = await SubscribeService.get_all(telegram_id=msg.from_user.id)
     except Exception as ex:
         logger.error(ex)
     else:

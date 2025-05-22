@@ -13,7 +13,7 @@ COPY pyproject.toml poetry.lock ./
 
 RUN poetry install
 
-COPY src .
+COPY /src .
 
 RUN chmod +x prestart.sh
 RUN chmod +x run
