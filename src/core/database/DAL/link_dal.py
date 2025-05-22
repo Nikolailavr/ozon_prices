@@ -1,7 +1,7 @@
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models.links import Link
+from core.database.models import Link
 from core.database.schemas import LinkBase
 
 
@@ -35,7 +35,7 @@ class LinkCRUD:
         existing = await self.get(session, link.url)
         if existing:
             return await self.update(session, link)
-        price_obj = Link(url=link.url, price=link.price, price_ozon=link.price_ozon)
+        price_obj = Link(**link.model_dump())
         session.add(price_obj)
         await session.commit()
         await session.refresh(price_obj)

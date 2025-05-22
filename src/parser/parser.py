@@ -71,18 +71,20 @@ class Parser:
         driver.get(url)
         await asyncio.sleep(2)
         title = self._clean_title(driver.title)
+        attr = None
         try:
             price_element = driver.find_element(
                 By.ID, value="state-webPrice-3121879-default-1"
             )
             attr = price_element.get_attribute("data-state")
+        except Exception as ex:
+            logger.error(f"Price parsing error: {ex}")
+        if attr:
             return self.__unzip_price_data(
                 attr=json.loads(attr),
                 title=title,
                 url=url,
             )
-        except Exception as ex:
-            logger.error(f"Price parsing error: {ex}")
 
     @staticmethod
     def _clean_title(title: str) -> str:

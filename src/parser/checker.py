@@ -18,6 +18,7 @@ class Checker:
         if link_db is None:
             await LinkService.create(link)
             return None
+
         # Check changing price
         condition = (
             link_db.price != link.price and link.price != 0,
