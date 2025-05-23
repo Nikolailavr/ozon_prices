@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class Parser:
     def __init__(self):
+        self.driver = None
         self.options = uc.ChromeOptions()
         # Основные настройки
         self.options.add_argument("--disable-blink-features=AutomationControlled")
@@ -60,6 +61,10 @@ class Parser:
             logger.error(ex)
 
     async def check(self, url: str):
+        need_quit = False
+        if self.driver is None:
+            self._driver_run()
+            need_quit = True
         logger.info(f"Start checking {url}")
         link = await self._get_url_data(url)
         if link:
@@ -71,6 +76,8 @@ class Parser:
                         chat_id=sub.telegram_id,
                         text="Price is changed",
                     )
+        if need_quit:
+            self.driver.quit()
 
     def _driver_run(self):
         try:
