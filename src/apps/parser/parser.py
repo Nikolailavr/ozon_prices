@@ -74,7 +74,7 @@ class Parser:
             options = uc.ChromeOptions()
 
             options.binary_location = "/usr/bin/chromium"
-            options.add_argument("--headless=new")
+            # options.add_argument("--headless=new")
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
@@ -183,6 +183,8 @@ class Parser:
         )
         submit_button.click()
 
+        self.__waiting_code()
+
     def __waiting_code(self):
         logger.info("Ждём пока придёт код")
         code = None
@@ -230,7 +232,8 @@ parser = Parser()
 
 
 async def main():
-    await parser.check("https://ozon.ru/t/3lSzd1G")
+    parser.login()
+    # await parser.check("https://ozon.ru/t/3lSzd1G")
 
 
 if __name__ == "__main__":
