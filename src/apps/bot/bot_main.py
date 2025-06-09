@@ -2,7 +2,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from bot.handlers import register_all_handlers
+from apps.bot.handlers import register_all_handlers
 from core import settings
 
 logger = logging.getLogger(__name__)

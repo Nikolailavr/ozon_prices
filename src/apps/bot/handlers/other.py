@@ -48,7 +48,7 @@ async def handle_add_link(msg: Message, bot: Bot) -> None:
         subscribe = SubscribeBase(telegram_id=msg.from_user.id, url=url)
         try:
             await SubscribeService.add(subscribe)
-            from parser import Parser
+            from apps.parser import Parser
 
             await Parser().check(subscribe.url)
             await bot.delete_message(

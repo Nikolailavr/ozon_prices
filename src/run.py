@@ -4,8 +4,8 @@ import threading
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from bot import start_bot
-from parser import Parser
+from apps.bot import start_bot
+from apps.parser import Parser
 from core import settings
 
 parser = Parser()
@@ -37,8 +37,8 @@ def run_scheduler():
 
 def main():
     # Создаем и запускаем поток для планировщика
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
+    # scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    # scheduler_thread.start()
 
     # Запускаем бота в основном потоке
     logger.info("Запускаем бота в основном потоке")

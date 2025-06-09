@@ -79,6 +79,22 @@ class Messages(BaseModel):
     )
 
 
+class Celery(BaseModel):
+    BROKER_URL: str
+    RESULT_BACKEND: str
+
+
+class Redis(BaseModel):
+    HOST: str
+    PORT: int
+    PASSWORD: str
+
+
+class Flower(BaseModel):
+    user: str
+    password: str
+
+
 class Schedule(BaseModel):
     interval: int
 
@@ -99,6 +115,9 @@ class Settings(BaseSettings):
     parser: Parser = Parser()
     msg: Messages = Messages()
     schedule: Schedule
+    celery: Celery
+    redis: Redis
+    flower: Flower
 
 
 settings = Settings()
