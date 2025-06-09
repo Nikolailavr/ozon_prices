@@ -5,6 +5,7 @@ import random
 import time
 
 import undetected_chromedriver as uc
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -34,7 +35,8 @@ class Parser:
             return True
         except Exception as ex:
             logger.error("Error: Login is not possible")
-            return None
+            raise ex
+            # return None
         finally:
             if need_quit:
                 self.driver.quit()
@@ -143,6 +145,7 @@ class Parser:
         # Открываем страницу регистрации
         self.driver.get("https://www.ozon.ru/my/main")
         time.sleep(random.uniform(5, 10))
+        logger.info(f"Title: {self.driver.title}")
 
         # Нажимаем кнопку "Войти или зарегистрироваться"
         logger.info('Нажимаем кнопку "Войти или зарегистрироваться"')

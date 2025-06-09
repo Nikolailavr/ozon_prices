@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Устанавливаем системные зависимости для Chromium
 RUN apt-get update && apt-get install -y \
-    chromium \
+    chromium=137.* \
     chromium-driver \
     fonts-liberation \
     libasound2 \
@@ -31,6 +31,18 @@ RUN apt-get update && apt-get install -y \
     libxfixes3 \
     libxrandr2 \
     libxshmfence1 \
+    fonts-liberation \
+    xfonts-base \
+    xfonts-75dpi \
+    x11-utils \
+    x11-xserver-utils \
+    libasound2 \
+    libxss1 \
+    libxtst6 \
+    libgl1-mesa-glx \
+    libgbm-dev \
+    xvfb \
+    libx11-xcb1 \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
