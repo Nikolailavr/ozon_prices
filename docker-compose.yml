@@ -40,10 +40,9 @@ services:
     build:
       context: ./
       dockerfile: ./docker-build/app/Dockerfile
-    command: celery -A app.celery.celery_app worker --pool=threads --loglevel=info -c 1
+    command: celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1
     volumes:
       - .:/app
-      - shared-data:/app/shared
     working_dir:
       /app
     environment:
@@ -56,7 +55,7 @@ services:
       build:
         context: .
         dockerfile: ./docker-build/app/Dockerfile_base
-      command: celery -A app.celery.celery_app flower --port=5555 \
+      command: celery -A apps.celery.celery_app flower --port=5555 \
         --basic_auth=${APP_CONFIG__FLOWER__USER}:${APP_CONFIG__FLOWER__PASSWORD}
       volumes:
         - .:/app
@@ -77,6 +76,6 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-      -
+
 volumes:
   pgdata:
