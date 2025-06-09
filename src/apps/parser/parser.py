@@ -11,7 +11,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # from apps.bot import send_msg
-from core import settings, redis_client
+from core import settings, redis_client, async_redis_client
 from core.database.schemas import LinkBase
 from core.services import SubscribeService
 from apps.parser.checker import Checker
@@ -77,6 +77,7 @@ class Parser:
 
             options.binary_location = "/usr/bin/chromium"
             # options.add_argument("--headless=new")
+            options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
@@ -92,13 +93,12 @@ class Parser:
 
     async def _get_url_data(self, url: str) -> LinkBase | None:
         try:
-            if await self.__load_cookies_if_exist() is None:
-                try:
-                    self.__login()
-                except Exception as ex:
-                    logger.error("Error: Login is not possible")
-                    return None
+            loaded_cookies = await self.__load_cookies_if_exist()
+            if loaded_cookies is None:
+                logger.error("Error: Login is not possible")
+                return None
             await asyncio.sleep(5)
+            logger.info(f"Start loading {url}")
             self.driver.get(url)
             await asyncio.sleep(60)
             title = self._clean_title(self.driver.title)
@@ -121,7 +121,7 @@ class Parser:
             return None
 
     async def __load_cookies_if_exist(self) -> bool | None:
-        cookies_json = await redis_client.get("cookies")
+        cookies_json = await async_redis_client.get("cookies")
         if not cookies_json:
             logger.error("В Redis нет сохранённых cookies")
             # await send_msg(
@@ -129,9 +129,12 @@ class Parser:
             #     text=f"В Redis нет сохранённых cookies",
             # )
             return None
+        self.driver.get("https://www.ozon.ru/my/main")
+        time.sleep(10)
         cookies = json.loads(cookies_json)
         for cookie in cookies:
             try:
+                cookie.pop("sameSite")
                 self.driver.add_cookie(cookie)
             except Exception as ex:
                 logger.warning(f"Can't add cookie {cookie.get('name')}: {ex}")
@@ -144,7 +147,7 @@ class Parser:
         wait = WebDriverWait(self.driver, 20)
         # Открываем страницу регистрации
         self.driver.get("https://www.ozon.ru/my/main")
-        time.sleep(random.uniform(5, 10))
+        time.sleep(10)
         logger.info(f"Title: {self.driver.title}")
 
         # Нажимаем кнопку "Войти или зарегистрироваться"
@@ -195,7 +198,6 @@ class Parser:
             code = redis_client.get("login_otp_code")
             if code:
                 redis_client.delete("login_otp_code")
-                code = code.decode()
                 self.__input_code(code)
                 break
             time.sleep(5)
@@ -235,8 +237,8 @@ parser = Parser()
 
 
 async def main():
-    parser.login()
-    # await parser.check("https://ozon.ru/t/3lSzd1G")
+    # parser.login()
+    await parser.check("https://ozon.ru/t/3lSzd1G")
 
 
 if __name__ == "__main__":

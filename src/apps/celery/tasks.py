@@ -19,7 +19,8 @@ def parser_login(self):
         return {"status": "success", "result": result}
     except Exception as e:
         logger.error(f"Общая ошибка")
-        self.retry(exc=e, countdown=5, max_retries=2)
+        raise e
+        # self.retry(exc=e, countdown=5, max_retries=2)
 
 
 # Успешное выполнение задачи

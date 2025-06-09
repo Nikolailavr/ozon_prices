@@ -3,23 +3,21 @@ services:
     build:
       dockerfile: ./docker-build/app/Dockerfile_bot
       context: ./
+    network_mode: host
     environment:
       APP_CONFIG__DB__ECHO: 0
-    ports:
-      - "8004:8000"
     depends_on:
       pg:
         condition: service_healthy
 
   pg:
     image: postgres:16.9
+    network_mode: host
     environment:
       POSTGRES_DB: ${APP_CONFIG__DB__NAME}
       POSTGRES_USER: ${APP_CONFIG__DB__USER}
       POSTGRES_PASSWORD: ${APP_CONFIG__DB__PASSWORD}
       PGDATA: /var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -33,11 +31,11 @@ services:
     build:
       context: ./
       dockerfile: ./docker-build/app/Dockerfile
-    command: /bin/bash -c "Xvfb :99 -screen 0 1920x1080x24 & export DISPLAY=:99 && celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1"
+    network_mode: host
+    command: celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1
     volumes:
       - .:/app
-    working_dir:
-      /app
+    working_dir: /app
     environment:
       - PYTHONPATH=/app/src
     depends_on:
@@ -45,30 +43,25 @@ services:
     restart: unless-stopped
 
   flower:
-      build:
-        context: .
-        dockerfile: ./docker-build/app/Dockerfile_base
-      command: celery -A apps.celery.celery_app flower --port=5555 \
-        --basic_auth=${APP_CONFIG__FLOWER__USER}:${APP_CONFIG__FLOWER__PASSWORD}
-      volumes:
-        - .:/app
-      working_dir: /app
-      environment:
-        PYTHONPATH: /app/src
-      ports:
-        - "5555:5555"
-      depends_on:
-        - redis
-        - celery-1
-      restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./docker-build/app/Dockerfile_base
+    network_mode: host
+    command: celery -A apps.celery.celery_app flower --port=5555 \
+      --basic_auth=${APP_CONFIG__FLOWER__USER}:${APP_CONFIG__FLOWER__PASSWORD}
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      PYTHONPATH: /app/src
+    restart: unless-stopped
 
   redis:
     image: redis:8
     container_name: redis
+    network_mode: host
     command: ["redis-server", "--requirepass", "${APP_CONFIG__REDIS__PASSWORD}"]
     restart: unless-stopped
-    ports:
-      - "6379:6379"
 
 volumes:
   pgdata:
