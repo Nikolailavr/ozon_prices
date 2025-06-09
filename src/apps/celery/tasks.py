@@ -11,7 +11,7 @@ cel_helper = CeleryHelper()
 
 
 @celery_app.task(bind=True)
-def cmd_login(self, filename: str):
+def parser_login(self):
     """Задача Celery для обработки чека"""
     try:
         parser = Parser()

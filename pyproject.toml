@@ -13,6 +13,7 @@ requests = "^2.32.3"
 undetected-chromedriver = "^3.5.5"
 apscheduler = "^3.11.0"
 celery = {extras = ["redis"], version = "^5.5.3"}
+flower = "^2.0.1"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os
 import random
 import time
 
@@ -9,9 +8,8 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sqlalchemy.util import await_only
 
-from apps.bot import send_msg
+# from apps.bot import send_msg
 from core import settings, redis_client
 from core.database.schemas import LinkBase
 from core.services import SubscribeService
@@ -25,43 +23,21 @@ COOKIE_FILE = "ozon_cookies.json"
 class Parser:
     def __init__(self):
         self.driver = None
-        self.options = uc.ChromeOptions()
-        # Основные настройки
-        self.options.add_argument("--disable-blink-features=AutomationControlled")
-
-        # Настройки для маскировки
-        self.options.add_argument("--disable-infobars")
-        self.options.add_argument("--disable-extensions")
-
-        # Обязательные параметры для headless
-        # self.options.add_argument("--headless=new")
-        self.options.add_argument("--no-sandbox")
-        self.options.add_argument("--disable-dev-shm-usage")
-        self.options.add_argument("--disable-gpu")
-
-        # Разрешение экрана (важно для корректного рендеринга)
-        self.options.add_argument("--window-size=1920,1080")
-
-        # Параметры для экономии ресурсов
-        self.options.add_argument("--disable-software-rasterizer")
-        self.options.add_argument("--disable-setuid-sandbox")
-
-        # Отключение кэша (опционально)
-        self.options.add_argument("--disk-cache-size=0")
-        self.options.add_argument("--media-cache-size=0")
-
-        # Реалистичный user-agent
-        self.options.add_argument(
-            "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
 
     def login(self) -> bool | None:
+        need_quit = None
+        if self.driver is None:
+            self._driver_run()
+            need_quit = True
         try:
             self.__login()
             return True
         except Exception as ex:
             logger.error("Error: Login is not possible")
             return None
+        finally:
+            if need_quit:
+                self.driver.quit()
 
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""
@@ -85,26 +61,32 @@ class Parser:
             new_link = await Checker.check_price_changing(link)
             if new_link:
                 subs = await SubscribeService.get_all(url=url)
-                for sub in subs:
-                    await send_msg(
-                        chat_id=sub.telegram_id,
-                        text="Price is changed",
-                    )
+                # for sub in subs:
+                #     await send_msg(
+                #         chat_id=sub.telegram_id,
+                #         text="Price is changed",
+                #     )
         if need_quit:
             self.driver.quit()
 
     def _driver_run(self):
         try:
-            self.driver = uc.Chrome(
-                driver_executable_path=settings.parser.driver_path,
-                options=self.options,
-                browser_executable_path="/usr/bin/chromium",
-                use_subprocess=False,
-            )
+            options = uc.ChromeOptions()
+
+            options.binary_location = "/usr/bin/chromium"
+            options.add_argument("--headless=new")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+
+            self.driver = uc.Chrome(options=options)
             self.driver.implicitly_wait(5)
-            self.driver.set_page_load_timeout(1200)
+            self.driver.set_page_load_timeout(120)
         except Exception as ex:
-            logger.error("Error in run driver")
+            logger.exception("Error in run driver")
+            self.driver = None
+            raise ex
 
     async def _get_url_data(self, url: str) -> LinkBase | None:
         try:
@@ -140,10 +122,10 @@ class Parser:
         cookies_json = await redis_client.get("cookies")
         if not cookies_json:
             logger.error("В Redis нет сохранённых cookies")
-            await send_msg(
-                chat_id=settings.telegram.admin_chat_id,
-                text=f"В Redis нет сохранённых cookies",
-            )
+            # await send_msg(
+            #     chat_id=settings.telegram.admin_chat_id,
+            #     text=f"В Redis нет сохранённых cookies",
+            # )
             return None
         cookies = json.loads(cookies_json)
         for cookie in cookies:
