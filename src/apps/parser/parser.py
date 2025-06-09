@@ -190,8 +190,8 @@ class Parser:
         code = None
         for _ in range(60):  # максимум 5 минут (60*5сек)
             code = redis_client.get("login_otp_code")
-            redis_client.delete("login_otp_code")
             if code:
+                redis_client.delete("login_otp_code")
                 code = code.decode()
                 self.__input_code(code)
                 break
