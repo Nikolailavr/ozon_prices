@@ -68,7 +68,7 @@ class Parser:
             options = uc.ChromeOptions()
 
             options.binary_location = "/usr/bin/chromium"
-            # options.add_argument("--headless=new")
+            options.add_argument("--headless=new")
             # options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
@@ -85,7 +85,7 @@ class Parser:
 
     async def _get_url_data(self, url: str) -> list[LinkBase] | None:
         try:
-            loaded_cookies = await self.__load_cookies_if_exist()
+            loaded_cookies = self.__load_cookies_if_exist()
             if loaded_cookies is None:
                 logger.error("Error: Login is not possible")
                 return None
@@ -93,7 +93,6 @@ class Parser:
             logger.info(f"Start loading {url}")
             self.driver.get(url)
             await asyncio.sleep(2)
-            logger.info(f"{self.driver.title=}")
             products = self._extract_products()
             logger.info(f"{products=}")
             return products
@@ -105,8 +104,8 @@ class Parser:
             # )
             return None
 
-    async def __load_cookies_if_exist(self) -> bool | None:
-        cookies_json = await async_redis_client.get("cookies")
+    def __load_cookies_if_exist(self) -> bool | None:
+        cookies_json = redis_client.get("cookies")
         if not cookies_json:
             logger.error("В Redis нет сохранённых cookies")
             # await send_msg(
@@ -216,7 +215,7 @@ class Parser:
 
                 if "items" not in state or "tileLayout" not in state:
                     continue
-                logger.info(json.dumps(state))
+
                 for item in state["items"]:
                     product = {}
 
@@ -276,6 +275,7 @@ class Parser:
             attempt < ATTEMPT_COUNT and self.driver.title.strip() == "Доступ ограничен"
         ):
             try:
+                logger.info(f"Заголовок: {self.driver.title.strip()}")
                 # Ждём появления кнопки "Обновить"
                 refresh_button = WebDriverWait(self.driver, 10).until(
                     EC.element_to_be_clickable((By.ID, "reload-button"))
@@ -283,7 +283,7 @@ class Parser:
                 refresh_button.click()
                 logger.info(f"Попытка №{attempt}. Нажал кнопку 'Обновить'")
             except Exception as ex:
-                logger.info(f"Ошибка при нажатии кнопки: {ex}")
+                logger.error(f"Не удалось обойти антибот защиту")
             finally:
                 attempt += 1
                 time.sleep(3)
