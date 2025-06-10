@@ -177,7 +177,8 @@ class Parser:
             submit_button.click()
 
             self.__waiting_code()
-        raise HTTPInputError("Доступ ограничен")
+        else:
+            raise HTTPInputError("Доступ ограничен")
 
     def __waiting_code(self):
         logger.info("Ждём пока придёт код")
@@ -215,7 +216,7 @@ class Parser:
 
                 if "items" not in state or "tileLayout" not in state:
                     continue
-
+                logger.info(json.dumps(state))
                 for item in state["items"]:
                     product = {}
 
@@ -247,7 +248,7 @@ class Parser:
 
                     # Название
                     for el in item.get("mainState", []):
-                        if el.get("atom", {}).get("type") == "textAtom":
+                        if el.get("id", "") == "name":
                             product["title"] = el["atom"]["textAtom"].get("text")
                             break  # Берем первое вхождение (название идет в конце массива)
 
@@ -271,18 +272,16 @@ class Parser:
     def __check_antibot(self) -> bool | None:
         ATTEMPT_COUNT = 10
         attempt = 0
-        condition = (
-            attempt < ATTEMPT_COUNT,
-            self.driver.title.strip() == "Доступ ограничен",
-        )
-        while all(condition):
+        while (
+            attempt < ATTEMPT_COUNT and self.driver.title.strip() == "Доступ ограничен"
+        ):
             try:
                 # Ждём появления кнопки "Обновить"
                 refresh_button = WebDriverWait(self.driver, 10).until(
                     EC.element_to_be_clickable((By.ID, "reload-button"))
                 )
                 refresh_button.click()
-                logger.info("Нажал кнопку 'Обновить'")
+                logger.info(f"Попытка №{attempt}. Нажал кнопку 'Обновить'")
             except Exception as ex:
                 logger.info(f"Ошибка при нажатии кнопки: {ex}")
             finally:

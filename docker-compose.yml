@@ -60,8 +60,19 @@ services:
     image: redis:8
     container_name: redis
     network_mode: host
-    command: ["redis-server", "--requirepass", "${APP_CONFIG__REDIS__PASSWORD}"]
+    command:
+      - redis-server
+      - --save 900 1
+      - --save 300 10
+      - --save 60 10000
+      - --appendonly yes
+      - --appendfilename appendonly.aof
+      - --appendfsync everysec
+      - --dir /data
+      - --requirepass ${APP_CONFIG__REDIS__PASSWORD}
     restart: unless-stopped
+    volumes:
+      - ./data:/data   # сохраняем данные на хост
 
 volumes:
   pgdata:
