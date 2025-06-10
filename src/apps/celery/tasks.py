@@ -23,6 +23,16 @@ def parser_login(self):
         # self.retry(exc=e, countdown=5, max_retries=2)
 
 
+@celery_app.task()
+def parser_check(url: str):
+    try:
+        cel_helper.run(Parser().check(url))
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Общая ошибка")
+        raise e
+
+
 # Успешное выполнение задачи
 @task_success.connect
 def task_success_handler(sender=None, result=None, **kwargs):

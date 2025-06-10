@@ -1,5 +1,7 @@
 import logging
 from aiogram import Router, F, Dispatcher
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 from aiogram.filters import Command
 
@@ -8,6 +10,9 @@ from core.services import UserService
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+class UserStates(StatesGroup):
+    waiting_url = State()
 
 
 @router.message(Command("start"))
@@ -23,12 +28,24 @@ async def __help(msg: Message) -> None:
 
 
 @router.message(Command("add"))
-async def __add(msg: Message) -> None:
+async def __add(msg: Message, state: FSMContext) -> None:
+    await state.set_state(UserStates.waiting_url)
     await msg.answer(settings.msg.MSG_ADD)
-    await UserService.update(
-        telegram_id=msg.from_user.id,
-        command="/add",
-    )
+
+
+@router.message(UserStates.waiting_url)
+async def __add_url(message: Message, state: FSMContext):
+    if message.text.startswith("https://www.ozon.ru/"):
+        url = message.text.rstrip("/")  # Удаляем trailing slash
+        try:
+            await UserService.update(telegram_id=message.from_user.id, url=url)
+            await message.answer(settings.msg.GOOD_URL)
+        except Exception as ex:
+            logger.error(f"Error adding link: {ex}")
+            await message.answer(settings.msg.BAD_URL)
+    else:
+        await message.answer(settings.msg.BAD_URL)
+    await state.clear()
 
 
 @router.message(Command("delete"))
@@ -38,19 +55,6 @@ async def __delete(msg: Message) -> None:
         telegram_id=msg.from_user.id,
         command="/delete",
     )
-
-
-# @router.message(Command("list"))
-# async def __list(msg: Message) -> None:
-#     result = "Список url из вашей подписки:\n\n"
-#     try:
-#         subs = await SubscribeService.get_all(telegram_id=msg.from_user.id)
-#     except Exception as ex:
-#         logger.error(ex)
-#     else:
-#         for index, item in enumerate(subs, 1):
-#             result += f"{index}. {item.url}\n"
-#         await msg.answer(result)
 
 
 def register_users_handlers(dp: Dispatcher) -> None:

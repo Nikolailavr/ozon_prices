@@ -68,7 +68,7 @@ class Parser:
             options = uc.ChromeOptions()
 
             options.binary_location = "/usr/bin/chromium"
-            options.add_argument("--headless=new")
+            # options.add_argument("--headless=new")
             # options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
@@ -94,7 +94,6 @@ class Parser:
             self.driver.get(url)
             await asyncio.sleep(2)
             products = self._extract_products()
-            logger.info(f"{products=}")
             return products
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")

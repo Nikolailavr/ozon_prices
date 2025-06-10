@@ -7,8 +7,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 
-from apps.celery.tasks import parser_login
+from apps.celery.tasks import parser_login, parser_check
 from core import settings, async_redis_client
+from core.services.users.user_service import UserService
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -43,6 +44,19 @@ async def process_code(message: Message, state: FSMContext):
     await async_redis_client.set("login_otp_code", code, ex=300)  # код живет 5 минут
     await message.answer("Код получен")
     await state.clear()
+
+
+@router.message(Command("check"))
+async def cmd_check(message: Message):
+    if message.chat.id != settings.telegram.admin_chat_id:
+        return  # игнорим остальных
+    logger.info("Запускаем проверку")
+    user = await UserService.get_or_create_user(message.from_user.id)
+    if user.url:
+        parser_check.delay(user.url)
+        await message.answer("Запускаем проверку")
+    else:
+        await message.answer("У вас нет активной подписки")
 
 
 @router.message(Command("myip"))
