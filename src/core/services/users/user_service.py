@@ -16,7 +16,7 @@ class UserService:
     @staticmethod
     async def update(
         telegram_id: int,
-        command: str = None,
+        command: str = "",
         url: str = None,
         active: bool = False,
     ) -> None:

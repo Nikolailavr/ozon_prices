@@ -36,6 +36,7 @@ async def __add(msg: Message, state: FSMContext) -> None:
 
 @router.message(UserStates.waiting_url)
 async def __add_url(message: Message, state: FSMContext):
+    logger.info(message.text)
     if message.text.startswith("https://ozon.ru/"):
         url = message.text.rstrip("/")  # Удаляем trailing slash
         try:
@@ -43,7 +44,7 @@ async def __add_url(message: Message, state: FSMContext):
             await message.answer(settings.msg.GOOD_URL)
         except Exception as ex:
             logger.error(f"Error adding link: {ex}")
-            await message.answer(settings.msg.BAD_URL)
+            await message.answer(f"Error adding link")
     else:
         await message.answer(settings.msg.BAD_URL)
     await state.clear()

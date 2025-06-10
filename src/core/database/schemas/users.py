@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -6,6 +8,6 @@ class UserBase(BaseModel):
 
 
 class UserRead(UserBase):
-    url: str = None
+    url: Optional[str] = None
     active: bool = False
-    last_command: str = ""
+    last_command: Optional[str] = ""

@@ -2,7 +2,7 @@
 
 docker volume prune -f
 docker compose --env-file ./src/.env up -d --build redis pg flower
-docker compose --env-file ./src/.env up -d --build app
+#docker compose --env-file ./src/.env up -d --build app
 #docker compose --env-file ./src/.env up --build
 docker image prune -f
 cd src
