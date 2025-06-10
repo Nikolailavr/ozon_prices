@@ -11,6 +11,7 @@ from core.services import UserService
 logger = logging.getLogger(__name__)
 router = Router()
 
+
 class UserStates(StatesGroup):
     waiting_url = State()
 
