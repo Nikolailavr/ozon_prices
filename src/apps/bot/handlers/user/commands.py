@@ -36,7 +36,7 @@ async def __add(msg: Message, state: FSMContext) -> None:
 
 @router.message(UserStates.waiting_url)
 async def __add_url(message: Message, state: FSMContext):
-    if message.text.startswith("https://www.ozon.ru/"):
+    if message.text.startswith("https://ozon.ru/"):
         url = message.text.rstrip("/")  # Удаляем trailing slash
         try:
             await UserService.update(telegram_id=message.from_user.id, url=url)
