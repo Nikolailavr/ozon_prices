@@ -283,7 +283,7 @@ class Parser:
                 refresh_button.click()
                 logger.info(f"Попытка №{attempt}. Нажал кнопку 'Обновить'")
             except Exception as ex:
-                logger.error(f"Не удалось обойти антибот защиту")
+                logger.error(f"Попытка №{attempt}. Не удалось обойти антибот защиту")
             finally:
                 attempt += 1
                 time.sleep(3)
