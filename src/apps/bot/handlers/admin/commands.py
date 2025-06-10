@@ -1,4 +1,6 @@
 import logging
+
+import requests
 from aiogram import Router, F, Dispatcher
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -41,6 +43,17 @@ async def process_code(message: Message, state: FSMContext):
     await async_redis_client.set("login_otp_code", code, ex=300)  # код живет 5 минут
     await message.answer("Код получен")
     await state.clear()
+
+
+@router.message(Command("myip"))
+async def __myip(msg: Message) -> None:
+    if str(msg.from_user.id) == settings.telegram.admin_chat_id:
+        url = "https://ipwho.is/"
+        text = "IP адрес не найден"
+        response = requests.get(url=url)
+        if response.status_code == 200:
+            text = response.json().get("ip")
+        await msg.answer(text)
 
 
 def register_admin_handlers(dp: Dispatcher) -> None:

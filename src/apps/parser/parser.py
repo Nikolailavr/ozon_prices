@@ -1,19 +1,18 @@
 import asyncio
 import json
 import logging
-import random
 import time
 
 import undetected_chromedriver as uc
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+from tornado.httputil import HTTPInputError
 
 # from apps.bot import send_msg
-from core import settings, redis_client, async_redis_client
+from core import redis_client, async_redis_client
 from core.database.schemas import LinkBase
-from core.services import SubscribeService
 from apps.parser.checker import Checker
 
 logger = logging.getLogger(__name__)
@@ -44,10 +43,7 @@ class Parser:
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""
         try:
-            links = await SubscribeService.get_all(active=True)
             self._driver_run()
-            for link in links:
-                await self.check(link.url)
             self.driver.quit()
         except Exception as ex:
             logger.error(ex)
@@ -58,16 +54,12 @@ class Parser:
             self._driver_run()
             need_quit = True
         logger.info(f"Start checking {url}")
-        link = await self._get_url_data(url)
-        if link:
-            new_link = await Checker.check_price_changing(link)
-            if new_link:
-                subs = await SubscribeService.get_all(url=url)
-                # for sub in subs:
-                #     await send_msg(
-                #         chat_id=sub.telegram_id,
-                #         text="Price is changed",
-                #     )
+        products = await self._get_url_data(url)
+        if products:
+            for item in products:
+                new_link = await Checker.check_price_changing(item)
+                # if new_link:
+                #     subs = await SubscribeService.get_all(url=url)
         if need_quit:
             self.driver.quit()
 
@@ -77,7 +69,7 @@ class Parser:
 
             options.binary_location = "/usr/bin/chromium"
             # options.add_argument("--headless=new")
-            options.debugger_address = "localhost:9222"
+            # options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
@@ -91,27 +83,20 @@ class Parser:
             self.driver = None
             raise ex
 
-    async def _get_url_data(self, url: str) -> LinkBase | None:
+    async def _get_url_data(self, url: str) -> list[LinkBase] | None:
         try:
             loaded_cookies = await self.__load_cookies_if_exist()
             if loaded_cookies is None:
                 logger.error("Error: Login is not possible")
                 return None
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)
             logger.info(f"Start loading {url}")
             self.driver.get(url)
-            await asyncio.sleep(60)
-            title = self._clean_title(self.driver.title)
-            price_element = self.driver.find_element(
-                By.ID, value="state-webPrice-3121879-default-1"
-            )
-            attr = price_element.get_attribute("data-state")
-            logger.info(f"{attr=}")
-            return self.__unzip_price_data(
-                attr=json.loads(attr),
-                title=title,
-                url=url,
-            )
+            await asyncio.sleep(2)
+            logger.info(f"{self.driver.title=}")
+            products = self._extract_products()
+            logger.info(f"{products=}")
+            return products
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")
             # await send_msg(
@@ -130,18 +115,20 @@ class Parser:
             # )
             return None
         self.driver.get("https://www.ozon.ru/my/main")
-        time.sleep(10)
-        cookies = json.loads(cookies_json)
-        for cookie in cookies:
-            try:
-                cookie.pop("sameSite")
-                self.driver.add_cookie(cookie)
-            except Exception as ex:
-                logger.warning(f"Can't add cookie {cookie.get('name')}: {ex}")
-                return None
+        time.sleep(3)
+        if self.__check_antibot():
+            cookies = json.loads(cookies_json)
+            for cookie in cookies:
+                try:
+                    cookie.pop("sameSite")
+                    self.driver.add_cookie(cookie)
+                except Exception as ex:
+                    logger.warning(f"Can't add cookie {cookie.get('name')}: {ex}")
+                    return None
 
-        logger.info("Cookies loaded into driver.")
-        return True
+            logger.info("Cookies loaded into driver.")
+            return True
+        return None
 
     def __login(self):
         wait = WebDriverWait(self.driver, 20)
@@ -149,47 +136,48 @@ class Parser:
         self.driver.get("https://www.ozon.ru/my/main")
         time.sleep(10)
         logger.info(f"Title: {self.driver.title}")
-
-        # Нажимаем кнопку "Войти или зарегистрироваться"
-        logger.info('Нажимаем кнопку "Войти или зарегистрироваться"')
-        login_button = wait.until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, 'button[data-widget="loginButton"]')
+        if self.__check_antibot():
+            # Нажимаем кнопку "Войти или зарегистрироваться"
+            logger.info('Нажимаем кнопку "Войти или зарегистрироваться"')
+            login_button = wait.until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, 'button[data-widget="loginButton"]')
+                )
             )
-        )
-        login_button.click()
-        time.sleep(3)
+            login_button.click()
+            time.sleep(3)
 
-        # Ждём, пока появится iframe с авторизацией
-        logger.info("Ждём, пока появится iframe с авторизацией")
-        WebDriverWait(self.driver, 10).until(
-            EC.frame_to_be_available_and_switch_to_it((By.ID, "authFrame"))
-        )
-
-        # Кликаем по "Войти по почте"
-        logger.info('Кликаем по "Войти по почте"')
-        email_login_button = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//div[contains(text(), 'Войти по почте')]")
+            # Ждём, пока появится iframe с авторизацией
+            logger.info("Ждём, пока появится iframe с авторизацией")
+            WebDriverWait(self.driver, 10).until(
+                EC.frame_to_be_available_and_switch_to_it((By.ID, "authFrame"))
             )
-        )
-        email_login_button.click()
 
-        # Вводим email
-        logger.info("Вводим email")
-        email_input = WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located((By.ID, "email"))
-        )
-        email_input.send_keys("lavrovwrk@gmail.com")
+            # Кликаем по "Войти по почте"
+            logger.info('Кликаем по "Войти по почте"')
+            email_login_button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//div[contains(text(), 'Войти по почте')]")
+                )
+            )
+            email_login_button.click()
 
-        # Нажимаем кнопку "Войти"
-        logger.info('Нажимаем кнопку "Войти"')
-        submit_button = WebDriverWait(self.driver, 20).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
-        )
-        submit_button.click()
+            # Вводим email
+            logger.info("Вводим email")
+            email_input = WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.ID, "email"))
+            )
+            email_input.send_keys("lavrovwrk@gmail.com")
 
-        self.__waiting_code()
+            # Нажимаем кнопку "Войти"
+            logger.info('Нажимаем кнопку "Войти"')
+            submit_button = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
+            )
+            submit_button.click()
+
+            self.__waiting_code()
+        raise HTTPInputError("Доступ ограничен")
 
     def __waiting_code(self):
         logger.info("Ждём пока придёт код")
@@ -209,28 +197,99 @@ class Parser:
         input_field = self.driver.find_element(By.NAME, "otp")
         input_field.send_keys(code)
 
+        time.sleep(5)
+
         cookies = self.driver.get_cookies()
         cookies_json = json.dumps(cookies, ensure_ascii=False)
         redis_client.set("cookies", cookies_json)
 
-    @staticmethod
-    def _clean_title(title: str) -> str:
-        """Очистка заголовка от лишнего текста"""
-        for text in settings.parser.text_for_replace_title:
-            title = title.replace(text, "")
-        return title.strip()
+    def _extract_products(self) -> list[LinkBase]:
+        products = []
+        # Получаем HTML-страницы через драйвер
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        # Находим все div с атрибутом data-state, содержащим карточки
+        for div in soup.find_all("div", attrs={"data-state": True}):
+            try:
+                data_state = div["data-state"]
+                state = json.loads(data_state)
 
-    @staticmethod
-    def __unzip_price_data(attr: dict, title: str, url: str) -> LinkBase:
-        ozon_price_data = attr.get("cardPrice", 0)
-        price_data = attr.get("price", 0)
-        logger.info("Unzip price data is OK")
-        return LinkBase(
-            url=url,
-            title=title,
-            ozon_price=ozon_price_data,
-            price=price_data,
+                if "items" not in state or "tileLayout" not in state:
+                    continue
+
+                for item in state["items"]:
+                    product = {}
+
+                    # Ссылка
+                    link = item.get("action", {}).get("link")
+                    if link:
+                        product["link"] = f"https://www.ozon.ru{link}"
+
+                    # Цена и старая цена
+                    for el in item.get("mainState", []):
+                        if el.get("atom", {}).get("type") == "priceV2":
+                            prices = el["atom"]["priceV2"]["price"]
+                            product["price"] = next(
+                                (
+                                    p["text"]
+                                    for p in prices
+                                    if p["textStyle"] == "PRICE"
+                                ),
+                                None,
+                            )
+                            product["original_price"] = next(
+                                (
+                                    p["text"]
+                                    for p in prices
+                                    if p["textStyle"] == "ORIGINAL_PRICE"
+                                ),
+                                None,
+                            )
+
+                    # Название
+                    for el in item.get("mainState", []):
+                        if el.get("atom", {}).get("type") == "textAtom":
+                            product["title"] = el["atom"]["textAtom"].get("text")
+                            break  # Берем первое вхождение (название идет в конце массива)
+
+                    products.append(product)
+                break
+
+            except Exception as e:
+                print(f"Ошибка при обработке карточки: {e}")
+                continue
+
+        return [
+            LinkBase(
+                url=product["link"],
+                title=product["title"],
+                ozon_price=product["price"],
+                price=product["original_price"],
+            )
+            for product in products
+        ]
+
+    def __check_antibot(self) -> bool | None:
+        ATTEMPT_COUNT = 10
+        attempt = 0
+        condition = (
+            attempt < ATTEMPT_COUNT,
+            self.driver.title.strip() == "Доступ ограничен",
         )
+        while all(condition):
+            try:
+                # Ждём появления кнопки "Обновить"
+                refresh_button = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.ID, "reload-button"))
+                )
+                refresh_button.click()
+                logger.info("Нажал кнопку 'Обновить'")
+            except Exception as ex:
+                logger.info(f"Ошибка при нажатии кнопки: {ex}")
+            finally:
+                attempt += 1
+                time.sleep(3)
+        if attempt < ATTEMPT_COUNT:
+            return True
 
 
 parser = Parser()

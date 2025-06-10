@@ -10,12 +10,7 @@ if TYPE_CHECKING:
 
 
 class Link(Base):
-    url: Mapped[str] = mapped_column(
-        Text, ForeignKey("subscribes.url"), primary_key=True, nullable=False
-    )
+    url: Mapped[str] = mapped_column(Text, primary_key=True, nullable=False)
     title: Mapped[str] = mapped_column(Text, nullable=True)
     ozon_price: Mapped[int] = mapped_column(Integer, default=0)
     price: Mapped[int] = mapped_column(Integer, default=0)
-    old_price: Mapped[int] = mapped_column(Integer, default=0)
-
-    subscribes: Mapped["Subscribe"] = relationship(back_populates="links")

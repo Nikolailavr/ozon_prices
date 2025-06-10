@@ -4,8 +4,7 @@ from aiogram.types import Message
 from aiogram.filters import StateFilter
 
 from core import settings
-from core.database.schemas import SubscribeBase
-from core.services import UserService, SubscribeService
+from core.services import UserService
 
 
 logger = logging.getLogger(__name__)
@@ -21,19 +20,19 @@ async def other_messages(msg: Message, bot: Bot) -> None:
     match user.last_command:
         case "/add":
             await handle_add_link(msg, bot)
-            await UserService.update_last_command(
+            await UserService.update(
                 telegram_id=msg.from_user.id,
                 command="",
             )
         case "/delete":
             await handle_delete_link(msg, bot)
-            await UserService.update_last_command(
+            await UserService.update(
                 telegram_id=msg.from_user.id,
                 command="",
             )
         case _:
             await msg.answer(settings.msg.BAD_MSG)
-            await UserService.update_last_command(
+            await UserService.update(
                 telegram_id=msg.from_user.id,
                 command="",
             )
@@ -43,14 +42,10 @@ async def handle_add_link(msg: Message, bot: Bot) -> None:
     """
     Обработка добавления ссылки
     """
-    if msg.text.startswith("https://www.ozon.ru/product/"):
+    if msg.text.startswith("https://www.ozon.ru/"):
         url = msg.text.rstrip("/")  # Удаляем trailing slash
-        subscribe = SubscribeBase(telegram_id=msg.from_user.id, url=url)
         try:
-            await SubscribeService.add(subscribe)
-            from apps.parser import Parser
-
-            await Parser().check(subscribe.url)
+            await UserService.update(telegram_id=msg.from_user.id, url=url)
             await bot.delete_message(
                 chat_id=msg.from_user.id, message_id=msg.message_id
             )
@@ -67,11 +62,9 @@ async def handle_delete_link(msg: Message, bot: Bot) -> None:
     Обработка удаления ссылки
     """
     try:
-        await SubscribeService.delete(
-            subscribe=SubscribeBase(
-                telegram_id=msg.from_user.id,
-                url=msg.text,
-            )
+        await UserService.update(
+            telegram_id=msg.from_user.id,
+            url="",
         )
         await bot.delete_message(chat_id=msg.from_user.id, message_id=msg.message_id)
         await msg.answer(settings.msg.GOOD_DELETE)

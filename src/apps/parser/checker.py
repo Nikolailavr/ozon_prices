@@ -21,8 +21,8 @@ class Checker:
 
         # Check changing price
         condition = (
-            link_db.price != link.price and link.price != 0,
-            link_db.ozon_price != link.ozon_price and link.ozon_price != 0,
+            link_db.price != link.price,
+            link_db.ozon_price != link.ozon_price,
         )
         if any(condition):
             logger.info(

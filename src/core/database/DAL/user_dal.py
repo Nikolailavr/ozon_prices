@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database.models import User
+from core.database.schemas.users import UserRead
 
 
 class UserCRUD:
@@ -11,7 +12,7 @@ class UserCRUD:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def create_user(
+    async def create(
         session: AsyncSession,
         telegram_id: int,
     ) -> User:
@@ -21,7 +22,7 @@ class UserCRUD:
         await session.refresh(user)
         return user
 
-    async def delete_user(
+    async def delete(
         self,
         session: AsyncSession,
         user_id: int,
@@ -33,16 +34,30 @@ class UserCRUD:
             return True
         return False
 
-    async def update_last_command(
+    async def update(
         self,
         session: AsyncSession,
-        telegram_id: int,
-        command: str,
-    ) -> None:
-        user = await self.get_user(session, telegram_id)
+        new_user: UserRead,
+    ):
+        user = await self.get_user(session, new_user.telegram_id)
         if user:
-            user.last_command = command
-            await session.commit()
+            if user:
+                updated = False
+
+                if user.url != new_user.url:
+                    user.url = new_user.url
+                    updated = True
+
+                if user.active != new_user.active:
+                    user.active = new_user.active
+                    updated = True
+
+                if user.last_command != new_user.last_command:
+                    user.last_command = new_user.last_command
+                    updated = True
+
+                if updated:
+                    await session.commit()
 
 
 user_crud = UserCRUD()
