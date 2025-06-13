@@ -72,7 +72,7 @@ services:
       - --requirepass ${APP_CONFIG__REDIS__PASSWORD}
     restart: unless-stopped
     volumes:
-      - ./data:/data   # сохраняем данные на хост
+      - ../data:/data   # сохраняем данные на хост
 
 volumes:
   pgdata:
