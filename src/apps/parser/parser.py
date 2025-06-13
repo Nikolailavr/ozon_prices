@@ -21,6 +21,32 @@ COOKIE_FILE = "ozon_cookies.json"
 
 
 class Parser:
+    JS_PATCH = """
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined
+        });
+
+        Object.defineProperty(navigator, 'plugins', {
+            get: () => {
+                const plugins = [ /* ... ваш большой список плагинов ... */ ];
+                Object.keys(plugins).forEach((key, index) => {
+                    Object.defineProperty(plugins, index, { value: plugins[key], enumerable: true });
+                });
+                Object.defineProperty(plugins, 'length', { value: plugins.length });
+                return plugins;
+            },
+        });
+
+        if (!window.chrome) {
+            Object.defineProperty(window, 'chrome', {
+                value: { /* ... ваш объект chrome ... */ },
+                configurable: true
+            });
+        }
+
+        // ... Добавьте остальные патчи сюда ...
+    """
+
     def __init__(self):
         self.driver = None
 
@@ -68,8 +94,8 @@ class Parser:
             options = uc.ChromeOptions()
 
             options.binary_location = "/usr/bin/chromium"
-            # options.add_argument("--headless=new")
-            options.debugger_address = "localhost:9222"
+            options.add_argument("--headless=new")
+            # options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
@@ -78,6 +104,10 @@ class Parser:
             self.driver = uc.Chrome(options=options)
             self.driver.implicitly_wait(5)
             self.driver.set_page_load_timeout(120)
+            # Добавляем скрипт для выполнения на каждой новой загрузке документа
+            self.driver.execute_cdp_cmd(
+                "Page.addScriptToEvaluateOnNewDocument", {"source": self.JS_PATCH}
+            )
         except Exception as ex:
             logger.exception("Error in run driver")
             self.driver = None
