@@ -94,7 +94,7 @@ class Parser:
             options = uc.ChromeOptions()
 
             options.binary_location = "/usr/bin/chromium"
-            options.add_argument("--headless=new")
+            # options.add_argument("--headless=new")
             # options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
