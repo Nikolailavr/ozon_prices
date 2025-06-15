@@ -31,11 +31,11 @@ services:
       retries: 3
     restart: unless-stopped
 
-  vnc_celery:
+  vnc:
     build:
       context: ./  # Путь к корню проекта
-      dockerfile: ./docker-build/app/Dockerfile_celery  # Твой Dockerfile
-    container_name: vnc-celery
+      dockerfile: ./docker-build/app/Dockerfile_vnc  # Твой Dockerfile
+    container_name: vnc
     network_mode: host  # Чтобы было проще подключаться к VNC
     ports:
       - "5900:5900"  # Порт для VNC клиента
