@@ -32,7 +32,7 @@ class LinkBase(BaseModel):
         except (AttributeError, ValueError) as e:
             raise ValueError(f"Некорректная цена: {value}")
 
-    @field_validator("text", mode="before")
+    @field_validator("title", mode="before")
     @classmethod
     def decode_html_entities(cls, value: str) -> str:
         return html.unescape(value)
