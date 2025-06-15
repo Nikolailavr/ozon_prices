@@ -1,16 +1,20 @@
 import logging
 
+from apps.bot import send_msg
 from apps.parser.parser import Parser
 from apps.celery.celery_app import celery_app
 from apps.celery.helper import CeleryHelper
 from celery.signals import task_success, task_failure
+
+from core.database.schemas.message import TelegramMessage
+from core.database.schemas.users import UserRead
 
 logger = logging.getLogger(__name__)
 
 cel_helper = CeleryHelper()
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True, queue="parser")
 def parser_login(self):
     """Задача Celery для обработки чека"""
     try:
@@ -23,15 +27,27 @@ def parser_login(self):
         # self.retry(exc=e, countdown=5, max_retries=2)
 
 
-@celery_app.task()
-def parser_check(url: str):
+@celery_app.task(queue="parser")
+def parser_check(user: UserRead):
     try:
-        cel_helper.run(Parser().check(url))
+        cel_helper.run(Parser().check(user))
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Общая ошибка")
         raise e
 
+
+@celery_app.task(queue="telegram")
+def send_telegram_message(msg: TelegramMessage):
+    try:
+        cel_helper.run(send_msg(
+            chat_id=msg.chat_id,
+            text=msg.text
+        ))
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Общая ошибка")
+        raise e
 
 # Успешное выполнение задачи
 @task_success.connect

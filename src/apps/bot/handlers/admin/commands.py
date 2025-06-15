@@ -53,7 +53,7 @@ async def cmd_check(message: Message):
     logger.info("Запускаем проверку")
     user = await UserService.get_or_create_user(message.from_user.id)
     if user.url:
-        parser_check.delay(user.url)
+        parser_check.delay(user)
         await message.answer("Запускаем проверку")
     else:
         await message.answer("У вас нет активной подписки")

@@ -10,7 +10,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from tornado.httputil import HTTPInputError
 
-from apps.bot import send_msg
 from core import redis_client
 from core.database.schemas import LinkBase
 from apps.parser.checker import Checker
@@ -91,6 +90,8 @@ class Parser:
                         f"💰 Новая цена: {new_link.ozon_price} ₽\n"
                         f"🔗 [Посмотреть товар]({new_link.url})"
                     )
+                    from apps.bot import send_msg
+
                     await send_msg(
                         chat_id=user.telegram_id,
                         text=text,
