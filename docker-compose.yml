@@ -49,19 +49,19 @@ services:
       - redis
     restart: unless-stopped
 
-  celery-1:
-    build:
-      context: ./
-      dockerfile: ./docker-build/app/Dockerfile_celery
-    network_mode: host
-#    command: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1
-    env_file:
-      - ./src/.env
-    environment:
-      - PYTHONPATH=/src
-    depends_on:
-      - redis
-    restart: unless-stopped
+#  celery-1:
+#    build:
+#      context: ./
+#      dockerfile: ./docker-build/app/Dockerfile_celery
+#    network_mode: host
+##    command: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1
+#    env_file:
+#      - ./src/.env
+#    environment:
+#      - PYTHONPATH=/src
+#    depends_on:
+#      - redis
+#    restart: unless-stopped
 
   flower:
     build:
