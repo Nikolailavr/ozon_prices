@@ -1,3 +1,4 @@
+import html
 from typing import Optional
 
 from pydantic import BaseModel, field_validator, ConfigDict
@@ -30,6 +31,11 @@ class LinkBase(BaseModel):
             return int(cleaned_value)
         except (AttributeError, ValueError) as e:
             raise ValueError(f"Некорректная цена: {value}")
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def decode_html_entities(cls, value: str) -> str:
+        return html.unescape(value)
 
 
 class LinkCreate(BaseModel):

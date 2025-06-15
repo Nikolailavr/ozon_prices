@@ -28,6 +28,7 @@ class Checker:
                 f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
             )
             await LinkService.update(link)
+            logger.info("Запись в БД успешна")
             return link
         else:
             return None

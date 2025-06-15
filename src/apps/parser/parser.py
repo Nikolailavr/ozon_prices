@@ -14,6 +14,7 @@ from apps.celery.telegram import send_telegram_message
 from core import redis_client
 from core.database.schemas import LinkBase, UserRead
 from apps.parser.checker import Checker
+from core.services.users.user_service import UserService
 from utils.msg_editor import price_change
 
 logger = logging.getLogger(__name__)
@@ -74,20 +75,22 @@ class Parser:
         except Exception as ex:
             logger.error(ex)
 
-    async def check(self, user: UserRead):
-        need_quit = False
-        if self.driver is None:
-            self._driver_run()
-            need_quit = True
-        logger.info(f"Start checking {user.url}")
-        products = await self._get_url_data(user.url)
-        if products:
-            for item in products:
-                new_link = await Checker.check_price_changing(item)
-                if new_link:
-                    send_telegram_message.delay(price_change(user, new_link))
-        if need_quit:
-            self.driver.quit()
+    async def check(self, user_id: int):
+        user = await UserService.get_or_create_user(user_id)
+        if user:
+            need_quit = False
+            if self.driver is None:
+                self._driver_run()
+                need_quit = True
+            logger.info(f"Start checking {user.url}")
+            products = await self._get_url_data(user.url)
+            if products:
+                for item in products:
+                    new_link = await Checker.check_price_changing(item)
+                    if new_link:
+                        send_telegram_message.delay(price_change(user, new_link))
+            if need_quit:
+                self.driver.quit()
 
     def _driver_run(self):
         try:

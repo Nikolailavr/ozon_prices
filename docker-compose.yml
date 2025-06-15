@@ -35,10 +35,10 @@ services:
 
   celery:
     build:
-      context: ./  # Путь к корню проекта
-      dockerfile: ./docker-build/app/Dockerfile_vnc  # Твой Dockerfile
+      context: ./
+      dockerfile: ./docker-build/app/Dockerfile_vnc
     container_name: ozon_celery
-    network_mode: host  # Чтобы было проще подключаться к VNC
+    network_mode: host
     ports:
       - "5900:5900"  # Порт для VNC клиента
     env_file:
@@ -54,7 +54,7 @@ services:
       context: ./
       dockerfile: ./docker-build/app/Dockerfile_base
     container_name: ozon_celery_tg
-    command: celery -A apps.celery.celery_app worker -Q telegram --pool=threads --loglevel=info --hostname=telegram@%h
+    command: celery -A apps.celery.celery_app worker -Q telegram --pool=threads --loglevel=info -c 1 --hostname=telegram@%h
     network_mode: host
     env_file:
       - ./src/.env
@@ -77,6 +77,10 @@ services:
     environment:
       PYTHONPATH: /app/src
     restart: unless-stopped
+    depends_on:
+      - redis
+      - celery
+      - celery_tg
 
   redis:
     image: redis:8
