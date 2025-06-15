@@ -1,12 +1,7 @@
-from typing import TYPE_CHECKING
-
-from sqlalchemy import ForeignKey, Text, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Text, Integer
+from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database.models import Base
-
-if TYPE_CHECKING:
-    from core.database.models import Subscribe
 
 
 class Link(Base):
