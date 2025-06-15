@@ -1,6 +1,5 @@
 from celery import Celery
 
-
 from core import settings
 
 celery_app = Celery(
