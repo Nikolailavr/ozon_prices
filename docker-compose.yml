@@ -4,6 +4,7 @@ services:
       dockerfile: ./docker-build/app/Dockerfile_bot
       context: ./
     network_mode: host
+    container_name: ozon_bot
     environment:
       APP_CONFIG__DB__ECHO: 0
     env_file:
@@ -15,6 +16,7 @@ services:
   pg:
     image: postgres:16.9
     network_mode: host
+    container_name: ozon_pg
     environment:
       POSTGRES_DB: ${APP_CONFIG__DB__NAME}
       POSTGRES_USER: ${APP_CONFIG__DB__USER}
@@ -31,11 +33,11 @@ services:
       retries: 3
     restart: unless-stopped
 
-  vnc:
+  celery:
     build:
       context: ./  # Путь к корню проекта
       dockerfile: ./docker-build/app/Dockerfile_vnc  # Твой Dockerfile
-    container_name: vnc
+    container_name: ozon_celery
     network_mode: host  # Чтобы было проще подключаться к VNC
     ports:
       - "5900:5900"  # Порт для VNC клиента
@@ -47,25 +49,12 @@ services:
       - redis
     restart: unless-stopped
 
-#  celery-1:
-#    build:
-#      context: ./
-#      dockerfile: ./docker-build/app/Dockerfile_celery
-#    network_mode: host
-##    command: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1
-#    env_file:
-#      - ./src/.env
-#    environment:
-#      - PYTHONPATH=/src
-#    depends_on:
-#      - redis
-#    restart: unless-stopped
-
   flower:
     build:
       context: .
       dockerfile: ./docker-build/app/Dockerfile_base
     network_mode: host
+    container_name: ozon_flower
     command: celery -A apps.celery.celery_app flower --port=5555 \
       --basic_auth=${APP_CONFIG__FLOWER__USER}:${APP_CONFIG__FLOWER__PASSWORD}
     env_file:
@@ -76,7 +65,7 @@ services:
 
   redis:
     image: redis:8
-    container_name: redis
+    container_name: ozon_redis
     network_mode: host
     command:
       - redis-server
