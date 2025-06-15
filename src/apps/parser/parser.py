@@ -10,10 +10,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from tornado.httputil import HTTPInputError
 
+from apps.celery.tasks import send_telegram_message
 from core import redis_client
 from core.database.schemas import LinkBase
 from apps.parser.checker import Checker
 from core.database.schemas.users import UserRead
+from utils.msg_editor import price_change
 
 logger = logging.getLogger(__name__)
 
@@ -84,18 +86,7 @@ class Parser:
             for item in products:
                 new_link = await Checker.check_price_changing(item)
                 if new_link:
-                    text = (
-                        f"🔔 Обновление цены!\n "
-                        f"📦 {new_link.title}\n"
-                        f"💰 Новая цена: {new_link.ozon_price} ₽\n"
-                        f"🔗 [Посмотреть товар]({new_link.url})"
-                    )
-                    from apps.bot import send_msg
-
-                    await send_msg(
-                        chat_id=user.telegram_id,
-                        text=text,
-                    )
+                    send_telegram_message.delay(price_change(user, new_link))
         if need_quit:
             self.driver.quit()
 

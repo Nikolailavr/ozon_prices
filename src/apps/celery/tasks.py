@@ -40,14 +40,12 @@ def parser_check(user: UserRead):
 @celery_app.task(queue="telegram")
 def send_telegram_message(msg: TelegramMessage):
     try:
-        cel_helper.run(send_msg(
-            chat_id=msg.chat_id,
-            text=msg.text
-        ))
+        cel_helper.run(send_msg(chat_id=msg.chat_id, text=msg.text))
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Общая ошибка")
         raise e
+
 
 # Успешное выполнение задачи
 @task_success.connect
