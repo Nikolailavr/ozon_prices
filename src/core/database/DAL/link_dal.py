@@ -20,8 +20,8 @@ class LinkCRUD:
         values = {}
         if link.price is not None:
             values["price"] = link.price
-        if link.price_ozon is not None:
-            values["price_ozon"] = link.price_ozon
+        if link.ozon_price is not None:
+            values["ozon_price"] = link.ozon_price
         if not values:
             return None
         stmt = update(Link).where(Link.url == link.url).values(**values).returning(Link)

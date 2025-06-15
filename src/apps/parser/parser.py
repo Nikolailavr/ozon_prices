@@ -10,10 +10,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from tornado.httputil import HTTPInputError
 
-# from apps.bot import send_msg
-from core import redis_client, async_redis_client
+from apps.bot import send_msg
+from core import redis_client
 from core.database.schemas import LinkBase
 from apps.parser.checker import Checker
+from core.database.schemas.users import UserRead
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,6 @@ class Parser:
         except Exception as ex:
             logger.error("Error: Login is not possible")
             raise ex
-            # return None
         finally:
             if need_quit:
                 self.driver.quit()
@@ -74,18 +74,27 @@ class Parser:
         except Exception as ex:
             logger.error(ex)
 
-    async def check(self, url: str):
+    async def check(self, user: UserRead):
         need_quit = False
         if self.driver is None:
             self._driver_run()
             need_quit = True
-        logger.info(f"Start checking {url}")
-        products = await self._get_url_data(url)
+        logger.info(f"Start checking {user.url}")
+        products = await self._get_url_data(user.url)
         if products:
             for item in products:
                 new_link = await Checker.check_price_changing(item)
-                # if new_link:
-                #     subs = await SubscribeService.get_all(url=url)
+                if new_link:
+                    text = (
+                        f"🔔 Обновление цены!\n "
+                        f"📦 {new_link.title}\n"
+                        f"💰 Новая цена: {new_link.ozon_price} ₽\n"
+                        f"🔗 [Посмотреть товар]({new_link.url})"
+                    )
+                    await send_msg(
+                        chat_id=user.telegram_id,
+                        text=text,
+                    )
         if need_quit:
             self.driver.quit()
 
@@ -95,7 +104,6 @@ class Parser:
 
             options.binary_location = "/usr/bin/chromium"
             # options.add_argument("--headless=new")
-            # options.debugger_address = "localhost:9222"
             options.add_argument("--disable-gpu")
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
@@ -137,10 +145,6 @@ class Parser:
         cookies_json = redis_client.get("cookies")
         if not cookies_json:
             logger.error("В Redis нет сохранённых cookies")
-            # await send_msg(
-            #     chat_id=settings.telegram.admin_chat_id,
-            #     text=f"В Redis нет сохранённых cookies",
-            # )
             return None
         self.driver.get("https://www.ozon.ru/my/main")
         time.sleep(3)
