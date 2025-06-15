@@ -43,8 +43,6 @@ services:
       - ./src/.env
     environment:
       - PYTHONPATH=/src
-    volumes:
-      - ./src:/src
     depends_on:
       - redis
     restart: unless-stopped

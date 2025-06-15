@@ -185,7 +185,10 @@ class Parser:
             logger.info('Кликаем по "Войти по почте"')
             email_login_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "//div[contains(text(), 'Войти по почте')]")
+                    (
+                        By.XPATH,
+                        "//div[contains(text(), 'Войти по почте') or contains(text(), 'Sign in by email')]",
+                    )
                 )
             )
             email_login_button.click()
