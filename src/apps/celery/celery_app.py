@@ -7,7 +7,7 @@ celery_app = Celery(
     "apps.celery.celery_app",
     broker=settings.celery.BROKER_URL,
     backend=settings.celery.RESULT_BACKEND,
-    include=["apps.celery.tasks"],
+    include=["apps.celery.parser", "apps.celery.telegram"],
     broker_connection_retry_on_startup=True,
 )
 

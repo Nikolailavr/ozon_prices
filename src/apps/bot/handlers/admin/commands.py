@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 
-from apps.celery.tasks import parser_login, parser_check
+from apps.celery.parser import parser_login, parser_check
 from core import settings, async_redis_client
 from core.services.users.user_service import UserService
 

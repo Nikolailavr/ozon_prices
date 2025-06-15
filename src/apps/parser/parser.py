@@ -10,11 +10,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from tornado.httputil import HTTPInputError
 
-from apps.celery.tasks import send_telegram_message
+from apps.celery.telegram import send_telegram_message
 from core import redis_client
-from core.database.schemas import LinkBase
+from core.database.schemas import LinkBase, UserRead
 from apps.parser.checker import Checker
-from core.database.schemas.users import UserRead
 from utils.msg_editor import price_change
 
 logger = logging.getLogger(__name__)

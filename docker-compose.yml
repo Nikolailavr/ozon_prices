@@ -49,6 +49,21 @@ services:
       - redis
     restart: unless-stopped
 
+  celery_telegram:
+    build:
+      context: ./
+      dockerfile: ./docker-build/app/Dockerfile_base
+    container_name: ozon_celery_tg
+    command: celery -A apps.celery.celery_app worker -Q telegram --pool=threads --loglevel=info
+    network_mode: host
+    env_file:
+      - ./src/.env
+    environment:
+      - PYTHONPATH=/src
+    depends_on:
+      - redis
+    restart: unless-stopped
+
   flower:
     build:
       context: .

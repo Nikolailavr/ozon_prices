@@ -15,4 +15,4 @@ echo "Ожидание запуска Xvfb и VNC..."
 sleep 5
 
 echo "Запуск Celery worker..."
-exec celery -A apps.celery.celery_app worker --pool=threads --loglevel=info -c 1
+exec celery -A apps.celery.celery_app worker -Q parser --pool=threads --loglevel=info -c 1

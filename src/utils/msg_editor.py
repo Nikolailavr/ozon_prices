@@ -12,7 +12,4 @@ def price_change(user: UserRead, link: LinkBase):
         f"💰 Новая цена: {link.ozon_price} ₽\n"
         f"🔗 [Посмотреть товар]({link.url})"
     )
-    return TelegramMessage(
-        chat_id=user.telegram_id,
-        text=text
-    )
+    return TelegramMessage(chat_id=user.telegram_id, text=text)
