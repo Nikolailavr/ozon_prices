@@ -312,7 +312,6 @@ class Parser:
         ]
 
     def __extract_products_v2(self) -> list[LinkBase]:
-        print(self.driver.page_source)
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
         filtered_items = [
             item
@@ -335,7 +334,9 @@ class Parser:
             old_price_tag = item.find(
                 "span", class_=lambda c: c and "tsBodyControl400Small" in c
             )
-            product["original_price"] = old_price_tag.text.strip() if old_price_tag else 0
+            product["original_price"] = (
+                old_price_tag.text.strip() if old_price_tag else 0
+            )
 
             # Название
             title_tag = item.find("span", class_="tsBody500Medium")
@@ -378,19 +379,18 @@ class Parser:
         """Проверяет наличие блока 'Вы не авторизованы'."""
         logger.info("Проверка наличия авторизации")
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
-        auth_block = soup.find("div", class_="iu6_23")
+        auth_block = soup.find("div", attrs={"data-widget": "myGuest"})
         if auth_block and "Вы не авторизованы" in auth_block.get_text(strip=True):
             logger.info("Требуется авторизация, cookie устарели!")
             return False
         return True
 
     def __scroll_to_bottom(
-        self, step: int = 500, pause_time: float = 0.5, max_attempts: int = 1000
+        self, step: int = 300, pause_time: float = 0.3, max_attempts: int = 1000
     ):
         """
         Плавный скролл до самого низа страницы.
 
-        :param driver: Экземпляр undetected_chromedriver
         :param step: Количество пикселей на каждый шаг
         :param pause_time: Задержка между шагами
         :param max_attempts: Защита от бесконечного цикла
