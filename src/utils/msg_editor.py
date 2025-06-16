@@ -18,6 +18,7 @@ def check_price(link: LinkBig):
     else:
         return high_price(link)
 
+
 def lower_price(link: LinkBig):
     return (
         f"🟢⬇️ *Цена снижена!*\n"
@@ -27,6 +28,7 @@ def lower_price(link: LinkBig):
         f"🔗 [Посмотреть товар]({link.url})"
     )
 
+
 def high_price(link: LinkBig):
     return (
         f"🔴⬆️ *Цена увеличилась!*\n"
@@ -35,6 +37,7 @@ def high_price(link: LinkBig):
         f"💰 *Новая цена:* {link.ozon_price} ₽\n"
         f"🔗 [Посмотреть товар]({link.url})"
     )
+
 
 def price_change(user: UserRead, link: LinkBig):
     return {
@@ -54,6 +57,7 @@ def need_authorization():
         "text": "Требуется авторизация, куки устарели или недоступны",
     }
 
+
 def out_of_stock_message(link: LinkBig):
     return (
         f"🔴 *Товар недоступен!*\n"
@@ -61,6 +65,7 @@ def out_of_stock_message(link: LinkBig):
         f"❌ Сейчас товар отсутствует в наличии.\n"
         f"🔗 [Посмотреть товар]({link.url})"
     )
+
 
 def in_stock_message(link: LinkBig):
     return (
