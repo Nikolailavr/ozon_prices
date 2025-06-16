@@ -40,3 +40,7 @@ class LinkBase(BaseModel):
 
 class LinkCreate(BaseModel):
     url: str
+
+class LinkBig(LinkBase):
+    ozon_price_old: int = 0
+    price_old: int = 0

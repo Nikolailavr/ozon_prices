@@ -1,20 +1,26 @@
 from core.database.schemas import (
-    LinkBase,
+    LinkBig,
     UserRead,
 )
 
 import re
 
+def check_price(link: LinkBig):
+    if link.ozon_price < link.ozon_price_old:
+        return f"🟢⬇️ *Цена снижена!*\n"
+    else:
+        return f"🔴⬆️ *Цена увеличилась!*\n"
 
-def price_change(user: UserRead, link: LinkBase):
+def price_change(user: UserRead, link: LinkBig):
+    title = check_price(link)
     # Экранируем только текст без ссылки
     text_escaped = escape_markdown(
-        f"🔔 Обновление цены!\n"
         f"📦 {link.title}\n"
-        f"💰 Новая цена: {link.ozon_price} ₽\n"
     )
+    price_text = (f"💰 *Старая цена:* {link.ozon_price_old} ₽\n"
+                  f"💰 *Новая цена:* {link.ozon_price} ₽\n")
     # Добавляем ссылку отдельно, без экранирования
-    text = f"{text_escaped}🔗 [Посмотреть товар]({link.url})"
+    text = f"{title}{text_escaped}{price_text}🔗 [Посмотреть товар]({link.url})"
     return {
         "chat_id": user.telegram_id,
         "text": text,
