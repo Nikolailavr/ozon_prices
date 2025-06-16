@@ -20,23 +20,23 @@ def check_price(link: LinkBig):
 
 
 def lower_price(link: LinkBig):
-    return (
+    text = (
         f"🟢⬇️ Цена снижена!\n"
         f"📦 {escape_markdown(link.title)}\n"
         f"💰 Старая цена: {link.ozon_price_old} ₽\n"
         f"💰 Новая цена: {link.ozon_price} ₽\n"
-        f"🔗 [Посмотреть товар]({link.url})"
     )
+    return f"{escape_markdown(text)}🔗 [Посмотреть товар]({link.url})"
 
 
 def high_price(link: LinkBig):
-    return (
+    text = (
         f"🔴⬆️ Цена увеличилась!\n"
         f"📦 {escape_markdown(link.title)}\n"
         f"💰 Старая цена: {link.ozon_price_old} ₽\n"
         f"💰 Новая цена: {link.ozon_price} ₽\n"
-        f"🔗 [Посмотреть товар]({link.url})"
     )
+    return f"{escape_markdown(text)}🔗 [Посмотреть товар]({link.url})"
 
 
 def price_change(user: UserRead, link: LinkBig):
@@ -59,18 +59,14 @@ def need_authorization():
 
 
 def out_of_stock_message(link: LinkBig):
-    return (
+    text = (
         f"🔴 Товар недоступен!\n"
         f"📦 {escape_markdown(link.title)}\n"
         f"❌ Сейчас товар отсутствует в наличии.\n"
-        f"🔗 [Посмотреть товар]({link.url})"
     )
+    return f"{escape_markdown(text)}🔗 [Посмотреть товар]({link.url})"
 
 
 def in_stock_message(link: LinkBig):
-    return (
-        f"🟢 Товар в наличии!\n"
-        f"📦 {escape_markdown(link.title)}\n"
-        f"💰 Цена: {link.ozon_price} ₽\n"
-        f"🔗 [Посмотреть товар]({link.url})"
-    )
+    text = f"🟢 Товар в наличии!\n📦 {link.title}\n💰 Цена: {link.ozon_price} ₽\n"
+    return f"{escape_markdown(text)}🔗 [Посмотреть товар]({link.url})"
