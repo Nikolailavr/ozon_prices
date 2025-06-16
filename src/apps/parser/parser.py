@@ -111,12 +111,15 @@ class Parser:
                 need_quit = True
                 self._driver_run()
             logger.info(f"Start checking url of user: {user.telegram_id}")
-            products = await self._get_url_data(user.url)
-            if products:
+            if self.__check_authorization():
+                products = self.__extract_products_v2()
                 for item in products:
                     new_link = await Checker.check_price_changing(item)
                     if new_link:
                         send_telegram_message.delay(price_change(user, new_link))
+            else:
+                send_telegram_message.delay(need_authorization())
+                return None
             if need_quit:
                 self.driver.quit()
 
@@ -138,12 +141,6 @@ class Parser:
             self.driver.get(url)
             await asyncio.sleep(5)
             self.__scroll_to_bottom()
-            if self.__check_authorization():
-                products = self._extract_products()
-                return products
-            else:
-                send_telegram_message.delay(need_authorization())
-                return None
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")
             return None
@@ -298,12 +295,67 @@ class Parser:
 
                     products.append(product)
                 logger.info(f"Товары найдены в количестве {len(products)} шт")
-                break
 
             except Exception as e:
                 print(f"Ошибка при обработке карточки: {e}")
                 continue
 
+        return [
+            LinkBase(
+                url=product["link"],
+                title=product["title"],
+                ozon_price=product.get("price", 0),
+                price=product.get("original_price", 0),
+            )
+            for product in products
+        ]
+
+    def __extract_products_v2(self) -> list[LinkBase]:
+
+        soup = BeautifulSoup(self.driver, "lxml")
+        items = soup.select("div.jr3_24")
+        products = []
+        for item in items:
+            link_tag = item.select_one("a.q4b11-a")
+            link = "https://www.ozon.ru" + link_tag["href"]
+
+            title_tag = item.select_one(
+                "a.q4b11-a.tile-clickable-element.j5r_24 span.tsBody500Medium"
+            )
+            title = title_tag.text.strip()
+
+            price_tag = item.select_one("span.c310-a1")
+            price = (
+                price_tag.text.strip()
+                .replace("\u2009", "")
+                .replace("₽", "")
+                .replace(" ", "")
+            )
+
+            old_price_tag = item.select("span.c310-a1")
+            old_price = None
+            if len(old_price_tag) > 1:
+                old_price = (
+                    old_price_tag[1]
+                    .text.strip()
+                    .replace("\u2009", "")
+                    .replace("₽", "")
+                    .replace(" ", "")
+                )
+
+            print(f"Название: {title}")
+            print(f"Ссылка: {link}")
+            print(f"Цена: {price} ₽")
+            if old_price:
+                print(f"Старая цена: {old_price} ₽")
+            products.append(
+                {
+                    "link": link,
+                    "title": title,
+                    "price": price,
+                    "original_price": old_price,
+                }
+            )
         return [
             LinkBase(
                 url=product["link"],
