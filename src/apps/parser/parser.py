@@ -136,7 +136,8 @@ class Parser:
         try:
             logger.info(f"Start loading {url}")
             self.driver.get(url)
-            await asyncio.sleep(2)
+            await asyncio.sleep(5)
+            self.__scroll_to_bottom()
             if self.__check_authorization():
                 products = self._extract_products()
                 return products
@@ -307,8 +308,8 @@ class Parser:
             LinkBase(
                 url=product["link"],
                 title=product["title"],
-                ozon_price=product["price"],
-                price=product["original_price"],
+                ozon_price=product.get("price", 0),
+                price=product.get("original_price", 0),
             )
             for product in products
         ]
@@ -345,6 +346,42 @@ class Parser:
             logger.info("Требуется авторизация, cookie устарели!")
             return False
         return True
+
+    def __scroll_to_bottom(
+        self, step: int = 300, pause_time: float = 0.3, max_attempts: int = 1000
+    ):
+        """
+        Плавный скролл до самого низа страницы.
+
+        :param driver: Экземпляр undetected_chromedriver
+        :param step: Количество пикселей на каждый шаг
+        :param pause_time: Задержка между шагами
+        :param max_attempts: Защита от бесконечного цикла
+        """
+        logger.info("Плавный скролл до самого низа страницы")
+        current_position = 0
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
+
+        attempts = 0
+        while attempts < max_attempts:
+            # Скроллим на step пикселей вниз
+            current_position += step
+            self.driver.execute_script(f"window.scrollTo(0, {current_position});")
+            time.sleep(pause_time)
+
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
+
+            # Если дошли до конца
+            if current_position >= new_height:
+                break
+
+            # Если страница подгрузилась, обновляем last_height
+            if new_height > last_height:
+                last_height = new_height
+
+            attempts += 1
+
+        print(f"Плавный скролл завершён за {attempts} шаг(ов)")
 
 
 parser = Parser()
