@@ -1,3 +1,4 @@
+from core import settings
 from core.database.schemas import (
     LinkBig,
     UserRead,
@@ -32,3 +33,10 @@ def price_change(user: UserRead, link: LinkBig):
 def escape_markdown(text: str) -> str:
     escape_chars = r"\_*[]()~`>#+-=|{}.!"
     return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
+
+
+def need_authorization():
+    return {
+        "chat_id": settings.telegram.admin_chat_id,
+        "text": "Требуется авторизация, куки устарели или недоступны",
+    }

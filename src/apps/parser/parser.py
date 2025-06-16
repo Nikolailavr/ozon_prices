@@ -11,11 +11,11 @@ from bs4 import BeautifulSoup
 from tornado.httputil import HTTPInputError
 
 from apps.celery.telegram import send_telegram_message
-from core import redis_client
+from core import redis_client, settings
 from core.database.schemas import LinkBase, UserRead
 from apps.parser.checker import Checker
 from core.services.users.user_service import UserService
-from utils.msg_editor import price_change
+from utils.msg_editor import price_change, need_authorization
 
 logger = logging.getLogger(__name__)
 
@@ -137,8 +137,12 @@ class Parser:
             logger.info(f"Start loading {url}")
             self.driver.get(url)
             await asyncio.sleep(2)
-            products = self._extract_products()
-            return products
+            if self.__check_authorization():
+                products = self._extract_products()
+                return products
+            else:
+                send_telegram_message.delay(need_authorization())
+                return None
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")
             return None
@@ -331,3 +335,24 @@ class Parser:
                 time.sleep(3)
         if attempt < ATTEMPT_COUNT:
             return True
+
+    def __check_authorization(self) -> bool:
+        """Проверяет наличие блока 'Вы не авторизованы'."""
+        logger.info("Проверка наличия авторизации")
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        auth_block = soup.find("div", class_="iu6_23")
+        if auth_block and "Вы не авторизованы" in auth_block.get_text(strip=True):
+            return True
+        logger.info("Требуется авторизация, cookie устарели!")
+        return False
+
+
+parser = Parser()
+
+
+def main():
+    asyncio.run(parser.check(user_id=settings.telegram.admin_chat_id))
+
+
+if __name__ == "__main__":
+    main()
