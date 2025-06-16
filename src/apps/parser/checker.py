@@ -14,6 +14,7 @@ class Checker:
         """
         Обработка изменений цены
         """
+        logger.info("Обработка изменений цены")
         link_db = await LinkService.get(link.url)
         if link_db is None:
             await LinkService.create(link)

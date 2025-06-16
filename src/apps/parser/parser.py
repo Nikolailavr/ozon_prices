@@ -243,6 +243,7 @@ class Parser:
         redis_client.set("cookies", cookies_json)
 
     def _extract_products(self) -> list[LinkBase]:
+        logger.info("Ищем товары в подписке...")
         products = []
         # Получаем HTML-страницы через драйвер
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
@@ -291,6 +292,7 @@ class Parser:
                             break  # Берем первое вхождение (название идет в конце массива)
 
                     products.append(product)
+                logger.info(f"Товары найдены в количестве {len(products)} шт")
                 break
 
             except Exception as e:
