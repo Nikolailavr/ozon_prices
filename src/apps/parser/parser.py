@@ -107,7 +107,7 @@ class Parser:
             if self.driver is None:
                 need_quit = True
                 self._driver_run()
-            logger.info(f"Start checking {user.url}")
+            logger.info(f"Start checking url of user: {user.id}")
             products = await self._get_url_data(user.url)
             if products:
                 for item in products:

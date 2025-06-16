@@ -20,15 +20,11 @@ class Checker:
             data = link.model_dump()
             return LinkBig.model_validate(data)
         # Check changing price
-        condition = (
-            link_db.price != link.price,
-            link_db.ozon_price != link.ozon_price,
-        )
+        condition = (link_db.ozon_price != link.ozon_price,)
         if any(condition):
             logger.info(
                 f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
             )
-
             await LinkService.update(link)
             logger.info("Запись в БД успешна")
             data = link.model_dump()
