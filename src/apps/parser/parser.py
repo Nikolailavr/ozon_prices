@@ -312,7 +312,7 @@ class Parser:
 
     def __extract_products_v2(self) -> list[LinkBase]:
 
-        soup = BeautifulSoup(self.driver, "lxml")
+        soup = BeautifulSoup(self.driver, "html.parser")
         items = soup.select("div.jr3_24")
         products = []
         for item in items:

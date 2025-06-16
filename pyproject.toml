@@ -20,7 +20,6 @@ celery = {extras = ["redis"], version = "^5.5.3"}
 flower = "^2.0.1"
 beautifulsoup4 = "^4.13.4"
 setuptools = "^80.9.0"
-lxml = "^5.4.0"
 
 
 [tool.poetry.group.dev.dependencies]
