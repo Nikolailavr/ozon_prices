@@ -67,6 +67,7 @@ class Parser:
             self.driver.execute_cdp_cmd(
                 "Page.addScriptToEvaluateOnNewDocument", {"source": self.JS_PATCH}
             )
+            logger.info("Настройки Chrome выполнены")
         except Exception as ex:
             logger.exception("Error in set_settings_chrome")
             self.driver = None
@@ -90,8 +91,10 @@ class Parser:
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""
         try:
+            logger.info("Запуск проверки всех ссылок")
             self._driver_run()
             users = await UserService.get_all()
+            logger.info(f"{users=}")
             for user in users:
                 await self.check(user=user)
         except Exception as ex:
@@ -141,6 +144,7 @@ class Parser:
             return None
 
     def __load_cookies_if_exist(self) -> bool | None:
+        logger.info("Загружаем cookies...")
         cookies_json = redis_client.get("cookies")
         if not cookies_json:
             logger.error("В Redis нет сохранённых cookies")
@@ -304,6 +308,7 @@ class Parser:
         ]
 
     def __check_antibot(self) -> bool | None:
+        logger.info("Проверка на доступ (антибот)")
         ATTEMPT_COUNT = 10
         attempt = 0
         while (
