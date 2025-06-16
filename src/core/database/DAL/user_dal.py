@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database.models import User
@@ -5,6 +7,12 @@ from core.database.schemas import UserRead
 
 
 class UserCRUD:
+    @staticmethod
+    async def get_all(session: AsyncSession) -> Sequence[User]:
+        stmt = select(User)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
     @staticmethod
     async def get_user(session: AsyncSession, telegram_id: int) -> UserRead | None:
         stmt = select(User).where(User.telegram_id == telegram_id)
@@ -20,7 +28,7 @@ class UserCRUD:
         session.add(user)
         await session.commit()
         await session.refresh(user)
-        return user
+        return UserRead.model_validate(user)
 
     async def delete(
         self,

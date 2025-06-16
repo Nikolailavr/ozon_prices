@@ -19,8 +19,6 @@ from utils.msg_editor import price_change
 
 logger = logging.getLogger(__name__)
 
-COOKIE_FILE = "ozon_cookies.json"
-
 
 class Parser:
     JS_PATCH = """
@@ -52,6 +50,28 @@ class Parser:
     def __init__(self):
         self.driver = None
 
+    def __set_settings_chrome(self):
+        try:
+            options = uc.ChromeOptions()
+            options.binary_location = "/usr/bin/chromium"
+            # options.add_argument("--headless=new")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+
+            self.driver = uc.Chrome(options=options)
+            self.driver.implicitly_wait(5)
+            self.driver.set_page_load_timeout(120)
+            # Добавляем скрипт для выполнения на каждой новой загрузке документа
+            self.driver.execute_cdp_cmd(
+                "Page.addScriptToEvaluateOnNewDocument", {"source": self.JS_PATCH}
+            )
+        except Exception as ex:
+            logger.exception("Error in set_settings_chrome")
+            self.driver = None
+            raise ex
+
     def login(self) -> bool | None:
         need_quit = None
         if self.driver is None:
@@ -71,17 +91,22 @@ class Parser:
         """Запуск проверки всех ссылок"""
         try:
             self._driver_run()
-            self.driver.quit()
+            users = await UserService.get_all()
+            for user in users:
+                await self.check(user=user)
         except Exception as ex:
             logger.error(ex)
+        finally:
+            self.driver.quit()
 
-    async def check(self, user_id: int):
-        user = await UserService.get_or_create_user(user_id)
+    async def check(self, user: UserRead = None, user_id: int = None):
+        if user is None:
+            user = await UserService.get_or_create_user(user_id)
         if user:
             need_quit = False
             if self.driver is None:
-                self._driver_run()
                 need_quit = True
+                self._driver_run()
             logger.info(f"Start checking {user.url}")
             products = await self._get_url_data(user.url)
             if products:
@@ -94,22 +119,11 @@ class Parser:
 
     def _driver_run(self):
         try:
-            options = uc.ChromeOptions()
-
-            options.binary_location = "/usr/bin/chromium"
-            # options.add_argument("--headless=new")
-            options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=1920,1080")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-
-            self.driver = uc.Chrome(options=options)
-            self.driver.implicitly_wait(5)
-            self.driver.set_page_load_timeout(120)
-            # Добавляем скрипт для выполнения на каждой новой загрузке документа
-            self.driver.execute_cdp_cmd(
-                "Page.addScriptToEvaluateOnNewDocument", {"source": self.JS_PATCH}
-            )
+            self.__set_settings_chrome()
+            loaded_cookies = self.__load_cookies_if_exist()
+            if loaded_cookies is None:
+                logger.error("Error: Login is not possible")
+                return None
         except Exception as ex:
             logger.exception("Error in run driver")
             self.driver = None
@@ -117,11 +131,6 @@ class Parser:
 
     async def _get_url_data(self, url: str) -> list[LinkBase] | None:
         try:
-            loaded_cookies = self.__load_cookies_if_exist()
-            if loaded_cookies is None:
-                logger.error("Error: Login is not possible")
-                return None
-            await asyncio.sleep(2)
             logger.info(f"Start loading {url}")
             self.driver.get(url)
             await asyncio.sleep(2)
@@ -129,10 +138,6 @@ class Parser:
             return products
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")
-            # await send_msg(
-            #     chat_id=settings.telegram.admin_chat_id,
-            #     text=f"Error get data from url {url}: {ex}",
-            # )
             return None
 
     def __load_cookies_if_exist(self) -> bool | None:
@@ -151,7 +156,7 @@ class Parser:
                 except Exception as ex:
                     logger.warning(f"Can't add cookie {cookie.get('name')}: {ex}")
                     return None
-
+            time.sleep(2)
             logger.info("Cookies loaded into driver.")
             return True
         return None
@@ -319,15 +324,3 @@ class Parser:
                 time.sleep(3)
         if attempt < ATTEMPT_COUNT:
             return True
-
-
-parser = Parser()
-
-
-async def main():
-    # parser.login()
-    await parser.check("https://ozon.ru/t/3lSzd1G")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

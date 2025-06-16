@@ -28,7 +28,7 @@ def parser_login(self):
 @celery_app.task(queue="parser")
 def parser_check(user_id: int):
     try:
-        cel_helper.run(Parser().check(user_id))
+        cel_helper.run(Parser().check(user_id=user_id))
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Общая ошибка")
