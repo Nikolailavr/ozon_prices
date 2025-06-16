@@ -79,8 +79,7 @@ class Parser:
             self._driver_run()
             need_quit = True
         try:
-            self.__login()
-            return True
+            return self.__login()
         except Exception as ex:
             logger.error("Error: Login is not possible")
             raise ex
@@ -111,8 +110,8 @@ class Parser:
                 need_quit = True
                 self._driver_run()
             logger.info(f"Start checking url of user: {user.telegram_id}")
+            self._get_url_data(user.url)
             if self.__check_authorization():
-                self._get_url_data(user.url)
                 products = self.__extract_products_v2()
                 for item in products:
                     new_link = await Checker.check_price_changing(item)
@@ -120,7 +119,7 @@ class Parser:
                         send_telegram_message.delay(price_change(user, new_link))
             else:
                 send_telegram_message.delay(need_authorization())
-                return None
+                redis_client.reset("cookies")
             if need_quit:
                 self.driver.quit()
 
@@ -168,7 +167,7 @@ class Parser:
             return True
         return None
 
-    def __login(self):
+    def __login(self) -> bool:
         wait = WebDriverWait(self.driver, 20)
         # Открываем страницу регистрации
         self.driver.get("https://www.ozon.ru/my/main")
@@ -217,11 +216,11 @@ class Parser:
             )
             submit_button.click()
 
-            self.__waiting_code()
+            return self.__waiting_code()
         else:
             raise HTTPInputError("Доступ ограничен")
 
-    def __waiting_code(self):
+    def __waiting_code(self) -> bool:
         logger.info("Ждём пока придёт код")
         code = None
         for _ in range(60):  # максимум 5 минут (60*5сек)
@@ -233,7 +232,8 @@ class Parser:
             time.sleep(5)
         if not code:
             logger.error("Код не получен, логин отменён")
-            return
+            return False
+        return True
 
     def __input_code(self, code: str):
         input_field = self.driver.find_element(By.NAME, "otp")
