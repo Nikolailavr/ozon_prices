@@ -342,9 +342,9 @@ class Parser:
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
         auth_block = soup.find("div", class_="iu6_23")
         if auth_block and "Вы не авторизованы" in auth_block.get_text(strip=True):
-            return True
-        logger.info("Требуется авторизация, cookie устарели!")
-        return False
+            logger.info("Требуется авторизация, cookie устарели!")
+            return False
+        return True
 
 
 parser = Parser()
