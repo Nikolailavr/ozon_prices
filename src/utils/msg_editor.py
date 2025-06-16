@@ -11,11 +11,11 @@ def check_price(link: LinkBig):
     if link.ozon_price < link.ozon_price_old:
         if link.ozon_price == 0:
             return out_of_stock_message(link)
-        elif link.ozon_price_old == 0:
-            return in_stock_message(link)
         else:
             return lower_price(link)
     else:
+        if link.ozon_price_old == 0:
+            return in_stock_message(link)
         return high_price(link)
 
 

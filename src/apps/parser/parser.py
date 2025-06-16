@@ -112,6 +112,7 @@ class Parser:
                 self._driver_run()
             logger.info(f"Start checking url of user: {user.telegram_id}")
             if self.__check_authorization():
+                self._get_url_data(user.url)
                 products = self.__extract_products_v2()
                 for item in products:
                     new_link = await Checker.check_price_changing(item)
@@ -135,11 +136,11 @@ class Parser:
             self.driver = None
             raise ex
 
-    async def _get_url_data(self, url: str) -> list[LinkBase] | None:
+    def _get_url_data(self, url: str) -> list[LinkBase] | None:
         try:
             logger.info(f"Start loading {url}")
             self.driver.get(url)
-            await asyncio.sleep(5)
+            time.sleep(5)
             self.__scroll_to_bottom()
         except Exception as ex:
             logger.error(f"Error get data from url ({url}): {ex}")
@@ -311,51 +312,35 @@ class Parser:
         ]
 
     def __extract_products_v2(self) -> list[LinkBase]:
-
-        soup = BeautifulSoup(self.driver, "html.parser")
-        items = soup.select("div.jr3_24")
+        print(self.driver.page_source)
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        filtered_items = [
+            item
+            for item in soup.find_all("div", attrs={"data-index": True})
+            if item["data-index"].isdigit() and 0 <= int(item["data-index"]) <= 23
+        ]
         products = []
-        for item in items:
+        for item in filtered_items:
+            product = {}
             link_tag = item.select_one("a.q4b11-a")
-            link = "https://www.ozon.ru" + link_tag["href"]
+            product["link"] = "https://www.ozon.ru" + link_tag["href"]
 
-            title_tag = item.select_one(
-                "a.q4b11-a.tile-clickable-element.j5r_24 span.tsBody500Medium"
+            # Найти актуальную цену (первую)
+            price_tag = item.find(
+                "span", class_=lambda c: c and "tsHeadline500Medium" in c
             )
-            title = title_tag.text.strip()
+            product["price"] = price_tag.text.strip() if price_tag else 0
 
-            price_tag = item.select_one("span.c310-a1")
-            price = (
-                price_tag.text.strip()
-                .replace("\u2009", "")
-                .replace("₽", "")
-                .replace(" ", "")
+            # Найти старую цену (вторую)
+            old_price_tag = item.find(
+                "span", class_=lambda c: c and "tsBodyControl400Small" in c
             )
+            product["original_price"] = old_price_tag.text.strip() if old_price_tag else 0
 
-            old_price_tag = item.select("span.c310-a1")
-            old_price = None
-            if len(old_price_tag) > 1:
-                old_price = (
-                    old_price_tag[1]
-                    .text.strip()
-                    .replace("\u2009", "")
-                    .replace("₽", "")
-                    .replace(" ", "")
-                )
-
-            print(f"Название: {title}")
-            print(f"Ссылка: {link}")
-            print(f"Цена: {price} ₽")
-            if old_price:
-                print(f"Старая цена: {old_price} ₽")
-            products.append(
-                {
-                    "link": link,
-                    "title": title,
-                    "price": price,
-                    "original_price": old_price,
-                }
-            )
+            # Название
+            title_tag = item.find("span", class_="tsBody500Medium")
+            product["title"] = title_tag.text.strip() if title_tag else "None"
+            products.append(product)
         return [
             LinkBase(
                 url=product["link"],
@@ -400,7 +385,7 @@ class Parser:
         return True
 
     def __scroll_to_bottom(
-        self, step: int = 300, pause_time: float = 0.3, max_attempts: int = 1000
+        self, step: int = 500, pause_time: float = 0.5, max_attempts: int = 1000
     ):
         """
         Плавный скролл до самого низа страницы.
@@ -433,7 +418,7 @@ class Parser:
 
             attempts += 1
 
-        print(f"Плавный скролл завершён за {attempts} шаг(ов)")
+        logger.info(f"Плавный скролл завершён за {attempts} шаг(ов)")
 
 
 parser = Parser()
