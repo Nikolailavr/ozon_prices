@@ -18,7 +18,7 @@ class Checker:
         if link_db is None:
             await LinkService.create(link)
             data = link.model_dump()
-            return LinkBig.model_validate(data)
+            # return LinkBig.model_validate(data)
         # Check changing price
         condition = (link_db.ozon_price != link.ozon_price,)
         if any(condition):
