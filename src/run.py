@@ -37,8 +37,8 @@ def run_scheduler():
 
 def main():
     # Создаем и запускаем поток для планировщика
-    # scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    # scheduler_thread.start()
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
 
     # Запускаем бота в основном потоке
     logger.info("Запускаем бота в основном потоке")
