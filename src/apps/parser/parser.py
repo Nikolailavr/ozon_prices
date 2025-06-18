@@ -153,7 +153,7 @@ class Parser:
             logger.error("В Redis нет сохранённых cookies")
             return None
         self.driver.get("https://www.ozon.ru/my/main")
-        time.sleep(2)
+        time.sleep(3)
         if self.__check_antibot():
             cookies = json.loads(cookies_json)
             for cookie in cookies:
@@ -373,6 +373,7 @@ class Parser:
             except Exception as ex:
                 logger.error(f"Попытка №{attempt}. Не удалось обойти антибот защиту")
         if attempt < ATTEMPT_COUNT:
+            logger.info("Антибот пройден!")
             return True
 
     def __check_authorization(self) -> bool:
@@ -425,6 +426,7 @@ parser = Parser()
 
 
 def main():
+    # parser.login()
     asyncio.run(parser.start_checking())
     # asyncio.run(parser.check(user_id=settings.telegram.admin_chat_id))
 
