@@ -22,7 +22,7 @@ def check_price(link: LinkBig):
 def lower_price(link: LinkBig):
     text = (
         f"🟢⬇️ Цена снижена!\n"
-        f"📦 {escape_markdown(link.title)}\n"
+        f"📦 {link.title}\n"
         f"💰 Старая цена: {link.ozon_price_old} ₽\n"
         f"💰 Новая цена: {link.ozon_price} ₽\n"
     )
@@ -32,7 +32,7 @@ def lower_price(link: LinkBig):
 def high_price(link: LinkBig):
     text = (
         f"🔴⬆️ Цена увеличилась!\n"
-        f"📦 {escape_markdown(link.title)}\n"
+        f"📦 {link.title}\n"
         f"💰 Старая цена: {link.ozon_price_old} ₽\n"
         f"💰 Новая цена: {link.ozon_price} ₽\n"
     )
@@ -47,7 +47,7 @@ def price_change(user: UserRead, link: LinkBig):
 
 
 def escape_markdown(text: str) -> str:
-    escape_chars = r"\_*[]()~`>#+-=|{}"
+    escape_chars = r"\_*[]()~`>#+-=|{}.!"
     return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
 
 
@@ -61,7 +61,7 @@ def need_authorization():
 def out_of_stock_message(link: LinkBig):
     text = (
         f"🔴 Товар недоступен!\n"
-        f"📦 {escape_markdown(link.title)}\n"
+        f"📦 {link.title}\n"
         f"❌ Сейчас товар отсутствует в наличии.\n"
     )
     return f"{escape_markdown(text)}🔗 [Посмотреть товар]({link.url})"
