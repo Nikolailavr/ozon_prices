@@ -99,7 +99,8 @@ class Parser:
         except Exception as ex:
             logger.error(ex)
         finally:
-            self.driver.quit()
+            if self.driver:
+                self.driver.quit()
 
     async def check(self, user: UserRead = None, user_id: int = None):
         if user is None:

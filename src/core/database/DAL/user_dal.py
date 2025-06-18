@@ -12,15 +12,13 @@ class UserCRUD:
         stmt = select(User)
         result = await session.execute(stmt)
         users = result.scalars().all()
-        return [UserRead.model_validate(user) for user in users]
+        return [UserRead.model_validate(user, from_attributes=True) for user in users]
 
     @staticmethod
     async def get_user(session: AsyncSession, telegram_id: int) -> UserRead | None:
         stmt = select(User).where(User.telegram_id == telegram_id)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
-
-
 
     @staticmethod
     async def create(
