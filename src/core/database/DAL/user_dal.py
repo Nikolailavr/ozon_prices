@@ -8,11 +8,10 @@ from core.database.schemas import UserRead
 
 class UserCRUD:
     @staticmethod
-    async def get_all(session: AsyncSession) -> list[UserRead]:
+    async def get_all(session: AsyncSession) -> Sequence[User]:
         stmt = select(User)
         result = await session.execute(stmt)
-        users = result.scalars().all()
-        return [UserRead.model_validate(user, from_attributes=True) for user in users]
+        return result.scalars().all()
 
     @staticmethod
     async def get_user(session: AsyncSession, telegram_id: int) -> UserRead | None:

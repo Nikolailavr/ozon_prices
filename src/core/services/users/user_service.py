@@ -33,7 +33,7 @@ class UserService:
     @staticmethod
     async def get_all() -> list[UserRead]:
         async with db_helper.get_session() as session:
-            return await user_crud.get_all(session)
-
+            users = user_crud.get_all(session)
+            return [UserRead.model_validate(user, from_attributes=True) for user in users]
 
 # user_service = UserService()
