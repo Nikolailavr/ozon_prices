@@ -91,9 +91,9 @@ class Parser:
         """Запуск проверки всех ссылок"""
         try:
             logger.info("Запуск проверки всех ссылок")
-            self._driver_run()
             users = await UserService.get_all()
             logger.info(f"{users=}")
+            self._driver_run()
             for user in users:
                 await self.check(user=user)
         except Exception as ex:
@@ -152,7 +152,7 @@ class Parser:
             logger.error("В Redis нет сохранённых cookies")
             return None
         self.driver.get("https://www.ozon.ru/my/main")
-        time.sleep(3)
+        time.sleep(2)
         if self.__check_antibot():
             cookies = json.loads(cookies_json)
             for cookie in cookies:
@@ -367,11 +367,10 @@ class Parser:
                 )
                 refresh_button.click()
                 logger.info(f"Попытка №{attempt}. Нажал кнопку 'Обновить'")
-            except Exception as ex:
-                logger.error(f"Попытка №{attempt}. Не удалось обойти антибот защиту")
-            finally:
                 attempt += 1
                 time.sleep(3)
+            except Exception as ex:
+                logger.error(f"Попытка №{attempt}. Не удалось обойти антибот защиту")
         if attempt < ATTEMPT_COUNT:
             return True
 

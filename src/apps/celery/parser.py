@@ -16,8 +16,7 @@ cel_helper = CeleryHelper()
 def parser_login(self):
     """Задача Celery для обработки чека"""
     try:
-        parser = Parser()
-        result = parser.login()
+        result = Parser().login()
         return {"status": "success", "result": result}
     except Exception as e:
         logger.error(f"Общая ошибка")
@@ -48,5 +47,5 @@ def task_failure_handler(
 ):
     logger.error(f"❌ Задача '{sender.name}' завершилась с ошибкой: {exception}")
 
-    if sender.name == "apps.celery.tasks.cmd_login" and args:
+    if sender.name == "apps.celery.tasks.parser_login" and args:
         ...
