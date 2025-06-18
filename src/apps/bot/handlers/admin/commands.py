@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 
-from apps.celery.parser import parser_login, parser_check
+from apps.celery.parser import parser_login, parser_check, parser_check_all
 from core import settings, async_redis_client
 from core.services.users.user_service import UserService
 
@@ -57,6 +57,15 @@ async def cmd_check(message: Message):
         await message.answer("Запускаем проверку")
     else:
         await message.answer("У вас нет активной подписки")
+
+
+@router.message(Command("check_all"))
+async def cmd_check_all(message: Message):
+    if message.chat.id != settings.telegram.admin_chat_id:
+        return  # игнорим остальных
+    logger.info("Запускаем проверку всех пользователей")
+    parser_check_all.delay()
+    await message.answer("Запускаем проверку всех пользователей")
 
 
 @router.message(Command("myip"))

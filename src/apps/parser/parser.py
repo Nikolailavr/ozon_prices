@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class Parser:
-    JS_PATCH = """
+    __JS_PATCH = """
         Object.defineProperty(navigator, 'webdriver', {
             get: () => undefined
         });
@@ -65,7 +65,7 @@ class Parser:
             self.driver.set_page_load_timeout(120)
             # Добавляем скрипт для выполнения на каждой новой загрузке документа
             self.driver.execute_cdp_cmd(
-                "Page.addScriptToEvaluateOnNewDocument", {"source": self.JS_PATCH}
+                "Page.addScriptToEvaluateOnNewDocument", {"source": self.__JS_PATCH}
             )
             logger.info("Настройки Chrome выполнены")
         except Exception as ex:

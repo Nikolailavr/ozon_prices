@@ -34,6 +34,16 @@ def parser_check(user_id: int):
         raise e
 
 
+@celery_app.task(queue="parser")
+def parser_check_all():
+    try:
+        cel_helper.run(Parser().start_checking())
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Общая ошибка")
+        raise e
+
+
 # Успешное выполнение задачи
 @task_success.connect
 def task_success_handler(sender=None, result=None, **kwargs):
