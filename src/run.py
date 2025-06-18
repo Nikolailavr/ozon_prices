@@ -5,12 +5,13 @@ import threading
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from apps.bot import start_bot
-from apps.parser import Parser
+from apps.celery.parser import parser_check_all
 from core import settings
 
-parser = Parser()
-
 logger = logging.getLogger(__name__)
+
+def run_parser_all():
+    parser_check_all.delay()
 
 
 def run_scheduler():
@@ -23,7 +24,7 @@ def run_scheduler():
 
     scheduler = AsyncIOScheduler(event_loop=loop)
     scheduler.add_job(
-        parser.start_checking,
+        run_parser_all,
         "interval",
         hours=settings.schedule.interval,
     )
