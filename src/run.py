@@ -10,6 +10,7 @@ from core import settings
 
 logger = logging.getLogger(__name__)
 
+
 def run_parser_all():
     parser_check_all.delay()
 
