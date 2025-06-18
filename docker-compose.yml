@@ -39,8 +39,6 @@ services:
       dockerfile: ./docker-build/app/Dockerfile_vnc
     container_name: ozon_celery
     network_mode: host
-#    ports:
-#      - "5900:5900"  # Порт для VNC клиента
     env_file:
       - ./src/.env
     environment:
