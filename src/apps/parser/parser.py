@@ -424,7 +424,8 @@ parser = Parser()
 
 
 def main():
-    asyncio.run(parser.check(user_id=settings.telegram.admin_chat_id))
+    asyncio.run(parser.start_checking())
+    # asyncio.run(parser.check(user_id=settings.telegram.admin_chat_id))
 
 
 if __name__ == "__main__":

@@ -8,16 +8,19 @@ from core.database.schemas import UserRead
 
 class UserCRUD:
     @staticmethod
-    async def get_all(session: AsyncSession) -> Sequence[User]:
+    async def get_all(session: AsyncSession) -> list[UserRead]:
         stmt = select(User)
         result = await session.execute(stmt)
-        return result.scalars().all()
+        users = result.scalars().all()
+        return [UserRead.model_validate(user) for user in users]
 
     @staticmethod
     async def get_user(session: AsyncSession, telegram_id: int) -> UserRead | None:
         stmt = select(User).where(User.telegram_id == telegram_id)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
+
+
 
     @staticmethod
     async def create(
