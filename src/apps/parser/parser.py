@@ -91,7 +91,7 @@ class Parser:
         try:
             return self.__login()
         except Exception as ex:
-            logger.error("Error: Login is not possible")
+            logger.error(f"Error in Login: {ex}")
             raise ex
         finally:
             self.__close_resources()
