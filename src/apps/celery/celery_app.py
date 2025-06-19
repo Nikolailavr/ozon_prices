@@ -8,6 +8,11 @@ celery_app = Celery(
     backend=settings.celery.RESULT_BACKEND,
     include=["apps.celery.parser", "apps.celery.telegram"],
     broker_connection_retry_on_startup=True,
+    broker_transport_options={
+        'visibility_timeout': 3600,
+        'socket_timeout': 10,   # Таймаут на уровне сокета
+        'socket_connect_timeout': 5,  # Таймаут на подключение
+    }
 )
 
 celery_app.conf.update(
