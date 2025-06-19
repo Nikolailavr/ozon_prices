@@ -367,7 +367,9 @@ class Parser:
         ATTEMPT_COUNT = 10
         attempt = 0
 
-        while attempt < ATTEMPT_COUNT and self._driver.title.strip() == "Доступ ограничен":
+        while (
+            attempt < ATTEMPT_COUNT and self._driver.title.strip() == "Доступ ограничен"
+        ):
             try:
                 logger.info(f"Заголовок: {self._driver.title.strip()}")
 
@@ -391,10 +393,14 @@ class Parser:
                 logger.info(f"Попытка №{attempt + 1}. Нажал кнопку 'Обновить'")
 
                 attempt += 1
-                time.sleep(random.uniform(2, 4))  # Случайная задержка для имитации человека
+                time.sleep(
+                    random.uniform(2, 4)
+                )  # Случайная задержка для имитации человека
 
             except Exception as ex:
-                logger.error(f"Попытка №{attempt + 1}. Не удалось обойти антибот защиту: {ex}")
+                logger.error(
+                    f"Попытка №{attempt + 1}. Не удалось обойти антибот защиту: {ex}"
+                )
                 attempt += 1
         if attempt < ATTEMPT_COUNT:
             logger.info("Антибот пройден!")

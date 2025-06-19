@@ -23,7 +23,7 @@ class Checker:
         condition = (link_db.ozon_price != link.ozon_price,)
         if any(condition):
             logger.info(
-                f"{link.title} | Цена: {link.price} р | Ozon: {link.ozon_price} р"
+                f"{link.title} | Новая цена: {link.ozon_price} р | Старая цена: {link_db.ozon_price} р"
             )
             await LinkService.update(link)
             logger.info("Запись в БД успешна")
