@@ -2,12 +2,14 @@ import asyncio
 import json
 import logging
 import os
+import random
 import socket
 import subprocess
 import time
 
 import undetected_chromedriver as uc
 from selenium.common import TimeoutException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -364,24 +366,42 @@ class Parser:
         logger.info("Проверка на доступ (антибот)")
         ATTEMPT_COUNT = 10
         attempt = 0
-        while (
-            attempt < ATTEMPT_COUNT and self._driver.title.strip() == "Доступ ограничен"
-        ):
+
+        while attempt < ATTEMPT_COUNT and self._driver.title.strip() == "Доступ ограничен":
             try:
                 logger.info(f"Заголовок: {self._driver.title.strip()}")
+
+                # Двигаем мышку в случайную точку
+                action = ActionChains(self._driver)
+                x_offset = random.randint(100, 800)
+                y_offset = random.randint(100, 600)
+                action.move_by_offset(x_offset, y_offset).perform()
+                logger.info(f"Двигаю мышь в точку ({x_offset}, {y_offset})")
+
+                # Случайный скролл
+                scroll_offset = random.randint(100, 1000)
+                self._driver.execute_script(f"window.scrollBy(0, {scroll_offset});")
+                logger.info(f"Прокручиваю страницу на {scroll_offset} пикселей")
+
                 # Ждём появления кнопки "Обновить"
                 refresh_button = WebDriverWait(self._driver, 10).until(
                     EC.element_to_be_clickable((By.ID, "reload-button"))
                 )
                 refresh_button.click()
-                logger.info(f"Попытка №{attempt}. Нажал кнопку 'Обновить'")
+                logger.info(f"Попытка №{attempt + 1}. Нажал кнопку 'Обновить'")
+
                 attempt += 1
-                time.sleep(3)
+                time.sleep(random.uniform(2, 4))  # Случайная задержка для имитации человека
+
             except Exception as ex:
-                logger.error(f"Попытка №{attempt}. Не удалось обойти антибот защиту")
+                logger.error(f"Попытка №{attempt + 1}. Не удалось обойти антибот защиту: {ex}")
+                attempt += 1
         if attempt < ATTEMPT_COUNT:
             logger.info("Антибот пройден!")
             return True
+        else:
+            logger.warning("Не удалось обойти антибот защиту после всех попыток")
+            return None
 
     def __check_authorization(self) -> bool:
         """Проверяет наличие блока 'Вы не авторизованы'."""
