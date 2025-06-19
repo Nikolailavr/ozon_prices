@@ -12,7 +12,12 @@ logger = logging.getLogger(__name__)
 cel_helper = CeleryHelper()
 
 
-@celery_app.task(bind=True, queue="parser")
+@celery_app.task(
+    bind=True,
+    queue="parser",
+    time_limit=300,
+    soft_time_limit=180,
+)
 def parser_login(self):
     """Задача Celery для обработки чека"""
     try:
@@ -24,7 +29,11 @@ def parser_login(self):
         # self.retry(exc=e, countdown=5, max_retries=2)
 
 
-@celery_app.task(queue="parser")
+@celery_app.task(
+    queue="parser",
+    time_limit=300,
+    soft_time_limit=180,
+)
 def parser_check(user_id: int):
     try:
         cel_helper.run(Parser().check(user_id=user_id))
@@ -34,7 +43,11 @@ def parser_check(user_id: int):
         raise e
 
 
-@celery_app.task(queue="parser")
+@celery_app.task(
+    queue="parser",
+    time_limit=300,
+    soft_time_limit=280,
+)
 def parser_check_all():
     try:
         cel_helper.run(Parser().start_checking())
