@@ -7,6 +7,7 @@ import subprocess
 import time
 
 import undetected_chromedriver as uc
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -177,27 +178,25 @@ class Parser:
         self._driver.get("https://www.ozon.ru/my/main")
         time.sleep(10)
         logger.info(f"Title: {self._driver.title}")
-        if self._driver.title == "Личный кабинет — OZON":
-            logger.info("Cookie уже актуальные. Авторизация выполнена")
-            return True
         if self.__check_antibot():
-            # Нажимаем кнопку "Войти или зарегистрироваться"
             logger.info('Нажимаем кнопку "Войти или зарегистрироваться"')
-            login_button = wait.until(
-                EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, 'button[data-widget="loginButton"]')
+            try:
+                login_button = wait.until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, 'button[data-widget="loginButton"]')
+                    )
                 )
-            )
-            login_button.click()
-            time.sleep(3)
+                login_button.click()
+                time.sleep(4)
+            except TimeoutException:
+                logger.info("Cookie уже актуальные. Авторизация выполнена")
+                return True
 
-            # Ждём, пока появится iframe с авторизацией
             logger.info("Ждём, пока появится iframe с авторизацией")
             WebDriverWait(self._driver, 10).until(
                 EC.frame_to_be_available_and_switch_to_it((By.ID, "authFrame"))
             )
 
-            # Кликаем по "Войти по почте"
             logger.info('Кликаем по "Войти по почте"')
             email_login_button = WebDriverWait(self._driver, 10).until(
                 EC.element_to_be_clickable(
@@ -216,7 +215,6 @@ class Parser:
             )
             email_input.send_keys("lavrovwrk@gmail.com")
 
-            # Нажимаем кнопку "Войти"
             logger.info('Нажимаем кнопку "Войти"')
             submit_button = WebDriverWait(self._driver, 20).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
