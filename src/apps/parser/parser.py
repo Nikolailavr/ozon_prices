@@ -193,20 +193,23 @@ class Parser:
                 return True
 
             logger.info("Ждём, пока появится iframe с авторизацией")
-            WebDriverWait(self._driver, 10).until(
-                EC.frame_to_be_available_and_switch_to_it((By.ID, "authFrame"))
-            )
+            try:
+                WebDriverWait(self._driver, 10).until(
+                    EC.frame_to_be_available_and_switch_to_it((By.ID, "authFrame"))
+                )
 
-            logger.info('Кликаем по "Войти по почте"')
-            email_login_button = WebDriverWait(self._driver, 10).until(
-                EC.element_to_be_clickable(
-                    (
-                        By.XPATH,
-                        "//div[contains(text(), 'Войти по почте') or contains(text(), 'Sign in by email')]",
+                logger.info('Кликаем по "Войти по почте"')
+                email_login_button = WebDriverWait(self._driver, 10).until(
+                    EC.element_to_be_clickable(
+                        (
+                            By.XPATH,
+                            "//div[contains(text(), 'Войти по почте') or contains(text(), 'Sign in by email')]",
+                        )
                     )
                 )
-            )
-            email_login_button.click()
+                email_login_button.click()
+            except TimeoutException:
+                raise TimeoutException("Не дождался окна авторизации")
 
             # Вводим email
             logger.info("Вводим email")
