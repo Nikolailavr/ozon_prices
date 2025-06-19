@@ -21,7 +21,11 @@ from core import redis_client
 from core.database.schemas import LinkBase, UserRead
 from apps.parser.checker import Checker
 from core.services.users.user_service import UserService
-from utils.msg_editor import (price_change, need_authorization, code_sent,)
+from utils.msg_editor import (
+    price_change,
+    need_authorization,
+    code_sent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +107,7 @@ class Parser:
                 await self.check(user=user)
         except Exception as ex:
             logger.error(ex)
+            raise ex
         finally:
             self.__close_resources()
 
@@ -472,6 +477,7 @@ class VirtualDisplayManager:
         self.vnc_process = None
         self.display = None
         self.vnc_port = None
+        self.error = None
 
     @staticmethod
     def _find_free_display(start=99, end=110):
@@ -530,11 +536,14 @@ class VirtualDisplayManager:
     def check_processes(self) -> bool | None:
         """Умная проверка процессов"""
         if self.xvfb_process.poll() is not None:
-            raise Exception("Процесс Xvfb неожиданно завершился.")
+            self.error = "Процесс Xvfb неожиданно завершился."
+            raise Exception(self.error)
         if self.fluxbox_process.poll() is not None:
-            raise Exception("Процесс Fluxbox неожиданно завершился.")
+            self.error = "Процесс Fluxbox неожиданно завершился."
+            raise Exception(self.error)
         if self.vnc_process.poll() is not None:
-            raise Exception("Процесс VNC неожиданно завершился.")
+            self.error = "Процесс VNC неожиданно завершился."
+            raise Exception(self.error)
         return True
 
     def stop(self):
