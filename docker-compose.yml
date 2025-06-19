@@ -78,26 +78,26 @@ services:
     depends_on:
       - redis
 
-redis:
-  image: redis:8
-  container_name: ozon_redis
-  network_mode: host
-  command:
-    - redis-server
-    - --bind 0.0.0.0          # Разрешаем входящие подключения с любых IP
-    - --save 900 1
-    - --save 300 10
-    - --save 60 10000
-    - --appendonly yes
-    - --appendfilename appendonly.aof
-    - --appendfsync everysec
-    - --dir /data
-    - --requirepass ${APP_CONFIG__REDIS__PASSWORD}
-  restart: unless-stopped
-  env_file:
-    - ./src/.env
-  volumes:
-    - ../data:/data   # сохраняем данные на хост
+  redis:
+    image: redis:8
+    container_name: ozon_redis
+    network_mode: host
+    command:
+      - redis-server
+      - --bind 0.0.0.0          # Разрешаем входящие подключения с любых IP
+      - --save 900 1
+      - --save 300 10
+      - --save 60 10000
+      - --appendonly yes
+      - --appendfilename appendonly.aof
+      - --appendfsync everysec
+      - --dir /data
+      - --requirepass ${APP_CONFIG__REDIS__PASSWORD}
+    restart: unless-stopped
+    env_file:
+      - ./src/.env
+    volumes:
+      - ../data:/data   # сохраняем данные на хост
 
 volumes:
   pgdata:
