@@ -112,10 +112,12 @@ class Parser:
             self.__close_resources()
 
     async def check(self, user: UserRead = None, user_id: int = None):
+        need_close = False
         if user is None:
             user = await UserService.get_or_create_user(user_id)
         if user:
             if self._driver is None:
+                need_close = True
                 self._driver_run()
             logger.info(f"Start checking url of user: {user.telegram_id}")
             self._get_url_data(user.url)
@@ -128,6 +130,7 @@ class Parser:
             else:
                 send_telegram_message.delay(need_authorization())
                 redis_client.delete("cookies")
+        if need_close:
             self.__close_resources()
 
     def _driver_run(self):
