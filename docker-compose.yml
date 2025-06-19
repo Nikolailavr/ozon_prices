@@ -43,8 +43,8 @@ services:
       - ./src/.env
     environment:
       - PYTHONPATH=/src
-    depends_on:
-      - redis
+#    depends_on:
+#      - redis
     restart: unless-stopped
 
   celery_tg:
@@ -58,8 +58,8 @@ services:
       - ./src/.env
     environment:
       - PYTHONPATH=/src
-    depends_on:
-      - redis
+#    depends_on:
+#      - redis
     restart: unless-stopped
 
   flower:
@@ -77,8 +77,6 @@ services:
     restart: unless-stopped
     depends_on:
       - redis
-      - celery
-      - celery_tg
 
   redis:
     image: redis:8
