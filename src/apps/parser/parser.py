@@ -148,14 +148,15 @@ class Parser:
             raise ex
 
     def _get_url_data(self, url: str) -> list[LinkBase] | None:
-        try:
+        if url:
             logger.info(f"Start loading {url}")
-            self._driver.get(url)
-            time.sleep(5)
-            self.__scroll_to_bottom()
-        except Exception as ex:
-            logger.error(f"Error get data from url ({url}): {ex}")
-            return None
+            try:
+                self._driver.get(url)
+                time.sleep(5)
+                self.__scroll_to_bottom()
+            except Exception as ex:
+                logger.error(f"Error get data from url ({url}): {ex}")
+                return None
 
     def __load_cookies_if_exist(self) -> bool | None:
         logger.info("Загружаем cookies...")
