@@ -17,11 +17,11 @@ from bs4 import BeautifulSoup
 from tornado.httputil import HTTPInputError
 
 from apps.celery.telegram import send_telegram_message
-from core import redis_client, settings
+from core import redis_client
 from core.database.schemas import LinkBase, UserRead
 from apps.parser.checker import Checker
 from core.services.users.user_service import UserService
-from utils.msg_editor import price_change, need_authorization
+from utils.msg_editor import (price_change, need_authorization, code_sent,)
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +225,8 @@ class Parser:
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
             )
             submit_button.click()
-
+            logger.info("Код должен быть отправлен, проверка почты")
+            send_telegram_message.delay(code_sent())
             return self.__waiting_code()
         else:
             raise HTTPInputError("Доступ ограничен")

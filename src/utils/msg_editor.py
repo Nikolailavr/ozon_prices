@@ -70,3 +70,10 @@ def out_of_stock_message(link: LinkBig):
 def in_stock_message(link: LinkBig):
     text = f"🟢 Товар в наличии!\n📦 {link.title}\n💰 Цена: {link.ozon_price} ₽\n"
     return f"{escape_markdown(text)}🔗 [Посмотреть товар]({link.url})"
+
+
+def code_sent():
+    return {
+        "chat_id": settings.telegram.admin_chat_id,
+        "text": "Код для авторизации отправлен, требуется проверить почту",
+    }
