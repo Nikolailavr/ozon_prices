@@ -1,6 +1,9 @@
 import asyncio
 import json
 import logging
+import os
+import socket
+import subprocess
 import time
 
 import undetected_chromedriver as uc
@@ -48,7 +51,11 @@ class Parser:
     """
 
     def __init__(self):
-        self.driver = None
+        self._driver = None
+        self._vnc_process = None
+        self._xvfb_process = None
+        self._fluxbox_process = None
+        self._display = 99
 
     def __set_settings_chrome(self):
         try:
@@ -59,23 +66,24 @@ class Parser:
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
+            options.add_argument(f"--display={self._display}")
 
-            self.driver = uc.Chrome(options=options)
-            self.driver.implicitly_wait(5)
-            self.driver.set_page_load_timeout(120)
+            self._driver = uc.Chrome(options=options)
+            self._driver.implicitly_wait(5)
+            self._driver.set_page_load_timeout(120)
             # Добавляем скрипт для выполнения на каждой новой загрузке документа
-            self.driver.execute_cdp_cmd(
+            self._driver.execute_cdp_cmd(
                 "Page.addScriptToEvaluateOnNewDocument", {"source": self.__JS_PATCH}
             )
             logger.info("Настройки Chrome выполнены")
         except Exception as ex:
             logger.exception("Error in set_settings_chrome")
-            self.driver = None
+            self._driver = None
             raise ex
 
     def login(self) -> bool | None:
         need_quit = None
-        if self.driver is None:
+        if self._driver is None:
             self._driver_run()
             need_quit = True
         try:
@@ -85,7 +93,7 @@ class Parser:
             raise ex
         finally:
             if need_quit:
-                self.driver.quit()
+                self._driver.quit()
 
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""
@@ -99,16 +107,13 @@ class Parser:
         except Exception as ex:
             logger.error(ex)
         finally:
-            if self.driver:
-                self.driver.quit()
+            self.__close_resources()
 
     async def check(self, user: UserRead = None, user_id: int = None):
         if user is None:
             user = await UserService.get_or_create_user(user_id)
         if user:
-            need_quit = False
-            if self.driver is None:
-                need_quit = True
+            if self._driver is None:
                 self._driver_run()
             logger.info(f"Start checking url of user: {user.telegram_id}")
             self._get_url_data(user.url)
@@ -121,25 +126,82 @@ class Parser:
             else:
                 send_telegram_message.delay(need_authorization())
                 redis_client.delete("cookies")
-            if need_quit:
-                self.driver.quit()
+            self.__close_resources()
 
     def _driver_run(self):
         try:
-            self.__set_settings_chrome()
-            loaded_cookies = self.__load_cookies_if_exist()
-            if loaded_cookies is None:
-                logger.error("Error: Login is not possible")
-                return None
+            if self._start_virtual_display():
+                self.__set_settings_chrome()
+                loaded_cookies = self.__load_cookies_if_exist()
+                if loaded_cookies is None:
+                    logger.error("Error: Login is not possible")
+                    return None
+            else:
+                logger.error("Не удалось запустить виртуальный дисплей")
         except Exception as ex:
             logger.exception("Error in run driver")
-            self.driver = None
+            self._driver = None
             raise ex
+
+    def _start_virtual_display(self):
+        """Запуск Xvfb, Fluxbox и VNC, возвращает процессы и display"""
+        self._display = self.__find_free_display()
+        display_num = int(self._display.replace(":", ""))
+        vnc_port = 5900 + display_num
+
+        logger.info(f"Запуск Xvfb на {self._display}...")
+        self._xvfb_process = subprocess.Popen(
+            ["Xvfb", self._display, "-screen", "0", "1920x1080x24"]
+        )
+        os.environ["DISPLAY"] = self._display
+
+        logger.info("Запуск оконного менеджера fluxbox...")
+        self._fluxbox_process = subprocess.Popen(["fluxbox"])
+
+        logger.info(f"Запуск VNC-сервера на порту {vnc_port}...")
+        self._vnc_process = subprocess.Popen(
+            [
+                "x11vnc",
+                "-display",
+                self._display,
+                "-forever",
+                "-passwd",
+                "123456",
+                "-shared",
+                "-nopw",
+                "-rfbport",
+                str(vnc_port),
+            ]
+        )
+        return self.__wait_for_port(port=vnc_port)
+
+    @staticmethod
+    def __find_free_display(start=99, end=110):
+        """Поиск свободного X дисплея"""
+        for display in range(start, end):
+            if not os.path.exists(f"/tmp/.X{display}-lock"):
+                return f":{display}"
+        raise Exception("Нет доступных X дисплеев")
+
+    @staticmethod
+    def __wait_for_port(host="localhost", port=5900, timeout=30):
+        """Ожидание доступности VNC порта"""
+        logger.info(f"Ожидание доступности порта {host}:{port}...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                if sock.connect_ex((host, port)) == 0:
+                    logger.info(f"Порт {port} доступен.")
+                    return True
+            time.sleep(1)
+        raise Exception(
+            f"VNC сервер не запустился на порту {port} в течение {timeout} секунд"
+        )
 
     def _get_url_data(self, url: str) -> list[LinkBase] | None:
         try:
             logger.info(f"Start loading {url}")
-            self.driver.get(url)
+            self._driver.get(url)
             time.sleep(5)
             self.__scroll_to_bottom()
         except Exception as ex:
@@ -152,14 +214,14 @@ class Parser:
         if not cookies_json:
             logger.error("В Redis нет сохранённых cookies")
             return None
-        self.driver.get("https://www.ozon.ru/my/main")
+        self._driver.get("https://www.ozon.ru/my/main")
         time.sleep(3)
         if self.__check_antibot():
             cookies = json.loads(cookies_json)
             for cookie in cookies:
                 try:
                     cookie.pop("sameSite")
-                    self.driver.add_cookie(cookie)
+                    self._driver.add_cookie(cookie)
                 except Exception as ex:
                     logger.warning(f"Can't add cookie {cookie.get('name')}: {ex}")
                     return None
@@ -169,11 +231,11 @@ class Parser:
         return None
 
     def __login(self) -> bool:
-        wait = WebDriverWait(self.driver, 20)
+        wait = WebDriverWait(self._driver, 20)
         # Открываем страницу регистрации
-        self.driver.get("https://www.ozon.ru/my/main")
+        self._driver.get("https://www.ozon.ru/my/main")
         time.sleep(10)
-        logger.info(f"Title: {self.driver.title}")
+        logger.info(f"Title: {self._driver.title}")
         if self.__check_antibot():
             # Нажимаем кнопку "Войти или зарегистрироваться"
             logger.info('Нажимаем кнопку "Войти или зарегистрироваться"')
@@ -187,13 +249,13 @@ class Parser:
 
             # Ждём, пока появится iframe с авторизацией
             logger.info("Ждём, пока появится iframe с авторизацией")
-            WebDriverWait(self.driver, 10).until(
+            WebDriverWait(self._driver, 10).until(
                 EC.frame_to_be_available_and_switch_to_it((By.ID, "authFrame"))
             )
 
             # Кликаем по "Войти по почте"
             logger.info('Кликаем по "Войти по почте"')
-            email_login_button = WebDriverWait(self.driver, 10).until(
+            email_login_button = WebDriverWait(self._driver, 10).until(
                 EC.element_to_be_clickable(
                     (
                         By.XPATH,
@@ -205,14 +267,14 @@ class Parser:
 
             # Вводим email
             logger.info("Вводим email")
-            email_input = WebDriverWait(self.driver, 20).until(
+            email_input = WebDriverWait(self._driver, 20).until(
                 EC.presence_of_element_located((By.ID, "email"))
             )
             email_input.send_keys("lavrovwrk@gmail.com")
 
             # Нажимаем кнопку "Войти"
             logger.info('Нажимаем кнопку "Войти"')
-            submit_button = WebDriverWait(self.driver, 20).until(
+            submit_button = WebDriverWait(self._driver, 20).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
             )
             submit_button.click()
@@ -237,12 +299,12 @@ class Parser:
         return True
 
     def __input_code(self, code: str):
-        input_field = self.driver.find_element(By.NAME, "otp")
+        input_field = self._driver.find_element(By.NAME, "otp")
         input_field.send_keys(code)
 
         time.sleep(5)
 
-        cookies = self.driver.get_cookies()
+        cookies = self._driver.get_cookies()
         cookies_json = json.dumps(cookies, ensure_ascii=False)
         redis_client.set("cookies", cookies_json)
 
@@ -250,7 +312,7 @@ class Parser:
         logger.info("Ищем товары в подписке...")
         products = []
         # Получаем HTML-страницы через драйвер
-        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        soup = BeautifulSoup(self._driver.page_source, "html.parser")
         # Находим все div с атрибутом data-state, содержащим карточки
         for div in soup.find_all("div", attrs={"data-state": True}):
             try:
@@ -313,7 +375,7 @@ class Parser:
         ]
 
     def __extract_products_v2(self) -> list[LinkBase]:
-        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        soup = BeautifulSoup(self._driver.page_source, "html.parser")
         filtered_items = [
             item
             for item in soup.find_all("div", attrs={"data-index": True})
@@ -358,12 +420,12 @@ class Parser:
         ATTEMPT_COUNT = 10
         attempt = 0
         while (
-            attempt < ATTEMPT_COUNT and self.driver.title.strip() == "Доступ ограничен"
+            attempt < ATTEMPT_COUNT and self._driver.title.strip() == "Доступ ограничен"
         ):
             try:
-                logger.info(f"Заголовок: {self.driver.title.strip()}")
+                logger.info(f"Заголовок: {self._driver.title.strip()}")
                 # Ждём появления кнопки "Обновить"
-                refresh_button = WebDriverWait(self.driver, 10).until(
+                refresh_button = WebDriverWait(self._driver, 10).until(
                     EC.element_to_be_clickable((By.ID, "reload-button"))
                 )
                 refresh_button.click()
@@ -379,7 +441,7 @@ class Parser:
     def __check_authorization(self) -> bool:
         """Проверяет наличие блока 'Вы не авторизованы'."""
         logger.info("Проверка наличия авторизации")
-        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        soup = BeautifulSoup(self._driver.page_source, "html.parser")
         auth_block = soup.find("div", attrs={"data-widget": "myGuest"})
         if auth_block and "Вы не авторизованы" in auth_block.get_text(strip=True):
             logger.info("Требуется авторизация, cookie устарели!")
@@ -398,16 +460,18 @@ class Parser:
         """
         logger.info("Плавный скролл до самого низа страницы")
         current_position = 0
-        last_height = self.driver.execute_script("return document.body.scrollHeight")
+        last_height = self._driver.execute_script("return document.body.scrollHeight")
 
         attempts = 0
         while attempts < max_attempts:
             # Скроллим на step пикселей вниз
             current_position += step
-            self.driver.execute_script(f"window.scrollTo(0, {current_position});")
+            self._driver.execute_script(f"window.scrollTo(0, {current_position});")
             time.sleep(pause_time)
 
-            new_height = self.driver.execute_script("return document.body.scrollHeight")
+            new_height = self._driver.execute_script(
+                "return document.body.scrollHeight"
+            )
 
             # Если дошли до конца
             if current_position >= new_height:
@@ -420,6 +484,24 @@ class Parser:
             attempts += 1
 
         logger.info(f"Плавный скролл завершён за {attempts} шаг(ов)")
+
+    def __close_resources(self):
+        logger.info("Закрытие ресурсов...")
+        if self._driver:
+            self._driver.quit()
+            logger.info("Драйвер закрыт.")
+        if self._vnc_process:
+            self._vnc_process.terminate()
+            logger.info("VNC сервер остановлен.")
+        if self._fluxbox_process:
+            self._fluxbox_process.terminate()
+            logger.info("Fluxbox остановлен.")
+        if self._xvfb_process:
+            self._xvfb_process.terminate()
+            logger.info("Xvfb остановлен.")
+
+
+class VNC: ...
 
 
 parser = Parser()
