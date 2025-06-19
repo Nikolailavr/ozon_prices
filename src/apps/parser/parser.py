@@ -52,10 +52,7 @@ class Parser:
 
     def __init__(self):
         self._driver = None
-        self._vnc_process = None
-        self._xvfb_process = None
-        self._fluxbox_process = None
-        self._display = 99
+        self._display_manager = VirtualDisplayManager()
 
     def __set_settings_chrome(self):
         try:
@@ -66,7 +63,7 @@ class Parser:
             options.add_argument("--window-size=1920,1080")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
-            options.add_argument(f"--display={self._display}")
+            options.add_argument(f"--display={self._display_manager.display}")
 
             self._driver = uc.Chrome(options=options)
             self._driver.implicitly_wait(5)
@@ -82,18 +79,15 @@ class Parser:
             raise ex
 
     def login(self) -> bool | None:
-        need_quit = None
         if self._driver is None:
             self._driver_run()
-            need_quit = True
         try:
             return self.__login()
         except Exception as ex:
             logger.error("Error: Login is not possible")
             raise ex
         finally:
-            if need_quit:
-                self._driver.quit()
+            self.__close_resources()
 
     async def start_checking(self) -> None:
         """Запуск проверки всех ссылок"""
@@ -130,73 +124,20 @@ class Parser:
 
     def _driver_run(self):
         try:
-            if self._start_virtual_display():
+            self._display_manager.start()
+        except Exception as e:
+            logger.error(f"Ошибка при старте дисплея: {e}")
+            raise e
+        try:
+            if self._display_manager.check_processes():
                 self.__set_settings_chrome()
                 loaded_cookies = self.__load_cookies_if_exist()
                 if loaded_cookies is None:
                     logger.error("Error: Login is not possible")
                     return None
-            else:
-                logger.error("Не удалось запустить виртуальный дисплей")
         except Exception as ex:
-            logger.exception("Error in run driver")
             self._driver = None
             raise ex
-
-    def _start_virtual_display(self):
-        """Запуск Xvfb, Fluxbox и VNC, возвращает процессы и display"""
-        self._display = self.__find_free_display()
-        display_num = int(self._display.replace(":", ""))
-        vnc_port = 5900 + display_num
-
-        logger.info(f"Запуск Xvfb на {self._display}...")
-        self._xvfb_process = subprocess.Popen(
-            ["Xvfb", self._display, "-screen", "0", "1920x1080x24"]
-        )
-        os.environ["DISPLAY"] = self._display
-
-        logger.info("Запуск оконного менеджера fluxbox...")
-        self._fluxbox_process = subprocess.Popen(["fluxbox"])
-
-        logger.info(f"Запуск VNC-сервера на порту {vnc_port}...")
-        self._vnc_process = subprocess.Popen(
-            [
-                "x11vnc",
-                "-display",
-                self._display,
-                "-forever",
-                "-passwd",
-                "123456",
-                "-shared",
-                "-nopw",
-                "-rfbport",
-                str(vnc_port),
-            ]
-        )
-        return self.__wait_for_port(port=vnc_port)
-
-    @staticmethod
-    def __find_free_display(start=99, end=110):
-        """Поиск свободного X дисплея"""
-        for display in range(start, end):
-            if not os.path.exists(f"/tmp/.X{display}-lock"):
-                return f":{display}"
-        raise Exception("Нет доступных X дисплеев")
-
-    @staticmethod
-    def __wait_for_port(host="localhost", port=5900, timeout=30):
-        """Ожидание доступности VNC порта"""
-        logger.info(f"Ожидание доступности порта {host}:{port}...")
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                if sock.connect_ex((host, port)) == 0:
-                    logger.info(f"Порт {port} доступен.")
-                    return True
-            time.sleep(1)
-        raise Exception(
-            f"VNC сервер не запустился на порту {port} в течение {timeout} секунд"
-        )
 
     def _get_url_data(self, url: str) -> list[LinkBase] | None:
         try:
@@ -236,6 +177,9 @@ class Parser:
         self._driver.get("https://www.ozon.ru/my/main")
         time.sleep(10)
         logger.info(f"Title: {self._driver.title}")
+        if self._driver.title == "Личный кабинет — OZON":
+            logger.info("Cookie уже актуальные. Авторизация выполнена")
+            return True
         if self.__check_antibot():
             # Нажимаем кнопку "Войти или зарегистрироваться"
             logger.info('Нажимаем кнопку "Войти или зарегистрироваться"')
@@ -449,7 +393,7 @@ class Parser:
         return True
 
     def __scroll_to_bottom(
-        self, step: int = 300, pause_time: float = 0.3, max_attempts: int = 1000
+        self, step: int = 500, pause_time: float = 0.25, max_attempts: int = 1000
     ):
         """
         Плавный скролл до самого низа страницы.
@@ -490,18 +434,99 @@ class Parser:
         if self._driver:
             self._driver.quit()
             logger.info("Драйвер закрыт.")
-        if self._vnc_process:
-            self._vnc_process.terminate()
-            logger.info("VNC сервер остановлен.")
-        if self._fluxbox_process:
-            self._fluxbox_process.terminate()
-            logger.info("Fluxbox остановлен.")
-        if self._xvfb_process:
-            self._xvfb_process.terminate()
-            logger.info("Xvfb остановлен.")
+        self._display_manager.stop()
 
 
-class VNC: ...
+class VirtualDisplayManager:
+    def __init__(self):
+        self.xvfb_process = None
+        self.fluxbox_process = None
+        self.vnc_process = None
+        self.display = None
+        self.vnc_port = None
+
+    @staticmethod
+    def _find_free_display(start=99, end=110):
+        for display in range(start, end):
+            if not os.path.exists(f"/tmp/.X{display}-lock"):
+                return f":{display}"
+        raise Exception("Нет доступных X дисплеев")
+
+    @staticmethod
+    def _wait_for_port(host="localhost", port=5900, timeout=30) -> bool | None:
+        logger.info(f"Ожидание доступности порта {host}:{port}...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                if sock.connect_ex((host, port)) == 0:
+                    logger.info(f"Порт {port} доступен.")
+                    return True
+            time.sleep(1)
+        raise Exception(
+            f"VNC сервер не запустился на порту {port} в течение {timeout} секунд"
+        )
+
+    def start(self):
+        self.display = self._find_free_display()
+        display_num = int(self.display.replace(":", ""))
+        self.vnc_port = 5900 + display_num
+
+        os.environ["DISPLAY"] = self.display
+
+        logger.info(f"Запуск Xvfb на {self.display}...")
+        self.xvfb_process = subprocess.Popen(
+            ["Xvfb", self.display, "-screen", "0", "1920x1080x24"]
+        )
+
+        logger.info("Запуск оконного менеджера fluxbox...")
+        self.fluxbox_process = subprocess.Popen(["fluxbox"])
+
+        logger.info(f"Запуск VNC-сервера на порту {self.vnc_port}...")
+        self.vnc_process = subprocess.Popen(
+            [
+                "x11vnc",
+                "-display",
+                self.display,
+                "-forever",
+                "-passwd",
+                "123456",
+                "-shared",
+                "-nopw",
+                "-rfbport",
+                str(self.vnc_port),
+            ]
+        )
+
+        return self._wait_for_port(port=self.vnc_port)
+
+    def check_processes(self) -> bool | None:
+        """Умная проверка процессов"""
+        if self.xvfb_process.poll() is not None:
+            raise Exception("Процесс Xvfb неожиданно завершился.")
+        if self.fluxbox_process.poll() is not None:
+            raise Exception("Процесс Fluxbox неожиданно завершился.")
+        if self.vnc_process.poll() is not None:
+            raise Exception("Процесс VNC неожиданно завершился.")
+        return True
+
+    def stop(self):
+        """Корректное завершение процессов"""
+        logger.info("Остановка процессов...")
+
+        for process, name in [
+            (self.vnc_process, "VNC"),
+            (self.fluxbox_process, "Fluxbox"),
+            (self.xvfb_process, "Xvfb"),
+        ]:
+            if process:
+                logger.info(f"Завершение процесса {name}...")
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                    logger.info(f"{name} завершен.")
+                except subprocess.TimeoutExpired:
+                    logger.warning(f"{name} не завершился, принудительно уничтожаем...")
+                    process.kill()
 
 
 parser = Parser()
