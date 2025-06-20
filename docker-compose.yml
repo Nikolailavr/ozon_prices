@@ -10,9 +10,9 @@ services:
       APP_CONFIG__DB__ECHO: 0
     env_file:
       - ./src/.env
-    depends_on:
-      pg:
-        condition: service_healthy
+#    depends_on:
+#      pg:
+#        condition: service_healthy
 
 #  pg:
 #    image: postgres:16.9
