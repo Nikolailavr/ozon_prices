@@ -87,6 +87,7 @@ class Redis(BaseModel):
     HOST: str
     PORT: int
     PASSWORD: str
+    DB: int
 
 
 class Flower(BaseModel):
