@@ -3,7 +3,8 @@ services:
     build:
       dockerfile: ./docker-build/app/Dockerfile_bot
       context: ./
-    network_mode: host
+    ports:
+      - "8004:8000"
     container_name: ozon_bot
     environment:
       APP_CONFIG__DB__ECHO: 0
@@ -13,32 +14,30 @@ services:
       pg:
         condition: service_healthy
 
-  pg:
-    image: postgres:16.9
-    network_mode: host
-    container_name: ozon_pg
-    environment:
-      POSTGRES_DB: ${APP_CONFIG__DB__NAME}
-      POSTGRES_USER: ${APP_CONFIG__DB__USER}
-      POSTGRES_PASSWORD: ${APP_CONFIG__DB__PASSWORD}
-      PGDATA: /var/lib/postgresql/data
-    env_file:
-      - ./src/.env
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-    restart: unless-stopped
+#  pg:
+#    image: postgres:16.9
+#    container_name: ozon_pg
+#    environment:
+#      POSTGRES_DB: ${APP_CONFIG__DB__NAME}
+#      POSTGRES_USER: ${APP_CONFIG__DB__USER}
+#      POSTGRES_PASSWORD: ${APP_CONFIG__DB__PASSWORD}
+#      PGDATA: /var/lib/postgresql/data
+#    env_file:
+#      - ./src/.env
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready" ]
+#      interval: 5s
+#      timeout: 3s
+#      retries: 3
+#    restart: unless-stopped
 
   celery:
     build:
       context: ./
       dockerfile: ./docker-build/app/Dockerfile_vnc
     container_name: ozon_celery
-    network_mode: host
     env_file:
       - ./src/.env
     environment:
@@ -53,7 +52,6 @@ services:
       dockerfile: ./docker-build/app/Dockerfile_base
     container_name: ozon_celery_tg
     command: celery -A apps.celery.celery_app worker -Q telegram --pool=threads --loglevel=info -c 1 --hostname=telegram@%h
-    network_mode: host
     env_file:
       - ./src/.env
     environment:
@@ -66,38 +64,39 @@ services:
     build:
       context: .
       dockerfile: ./docker-build/app/Dockerfile_base
-    network_mode: host
+    ports:
+      - "5556:5556"
     container_name: ozon_flower
-    command: celery -A apps.celery.celery_app flower --port=5555 \
+    command: celery -A apps.celery.celery_app flower --port=5556 \
       --basic_auth=${APP_CONFIG__FLOWER__USER}:${APP_CONFIG__FLOWER__PASSWORD}
     env_file:
       - ./src/.env
     environment:
       PYTHONPATH: /app/src
     restart: unless-stopped
-    depends_on:
-      - redis
+#    depends_on:
+#      - redis
 
-  redis:
-    image: redis:8
-    container_name: ozon_redis
-    network_mode: host
-    command:
-      - redis-server
-      - --bind 0.0.0.0          # Разрешаем входящие подключения с любых IP
-      - --save 900 1
-      - --save 300 10
-      - --save 60 10000
-      - --appendonly yes
-      - --appendfilename appendonly.aof
-      - --appendfsync everysec
-      - --dir /data
-      - --requirepass ${APP_CONFIG__REDIS__PASSWORD}
-    restart: unless-stopped
-    env_file:
-      - ./src/.env
-    volumes:
-      - ../data:/data   # сохраняем данные на хост
+#  redis:
+#    image: redis:8
+#    container_name: redis
+#    network_mode: host
+#    command:
+#      - redis-server
+#      - --bind 0.0.0.0          # Разрешаем входящие подключения с любых IP
+#      - --save 900 1
+#      - --save 300 10
+#      - --save 60 10000
+#      - --appendonly yes
+#      - --appendfilename appendonly.aof
+#      - --appendfsync everysec
+#      - --dir /data
+#      - --requirepass ${APP_CONFIG__REDIS__PASSWORD}
+#    restart: unless-stopped
+#    env_file:
+#      - ./src/.env
+#    volumes:
+#      - ../data:/data   # сохраняем данные на хост
 
-volumes:
-  pgdata:
+#volumes:
+#  pgdata:
