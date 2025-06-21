@@ -384,13 +384,13 @@ class Parser:
 
                 # Двигаем мышку в случайную точку
                 action = ActionChains(self._driver)
-                x_offset = random.randint(100, 800)
-                y_offset = random.randint(100, 600)
+                x_offset = random.randint(100, 500)
+                y_offset = random.randint(100, 400)
                 action.move_by_offset(x_offset, y_offset).perform()
                 logger.info(f"Двигаю мышь в точку ({x_offset}, {y_offset})")
 
                 # Случайный скролл
-                scroll_offset = random.randint(100, 1000)
+                scroll_offset = random.randint(100, 500)
                 self._driver.execute_script(f"window.scrollBy(0, {scroll_offset});")
                 logger.info(f"Прокручиваю страницу на {scroll_offset} пикселей")
 
