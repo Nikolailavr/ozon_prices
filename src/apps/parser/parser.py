@@ -134,6 +134,7 @@ class Parser:
                         send_telegram_message.delay(price_change(user, new_link))
             else:
                 send_telegram_message.delay(need_authorization())
+        logger.info(f"Проверка для пользователя {user.telegram_id} завершена")
         if need_close:
             self.__close_resources()
 
