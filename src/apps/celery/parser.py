@@ -65,9 +65,9 @@ def parser_check_all():
 def task_success_handler(sender=None, result=None, **kwargs):
     logger.info(f"✅ Задача '{sender.name}' выполнена успешно")
     condition = (
-        sender.name == "apps.celery.tasks.parser_login",
-        sender.name == "apps.celery.tasks.parser_check",
-        sender.name == "apps.celery.tasks.parser_check_all",
+        sender.name == "apps.celery.parser.parser_login",
+        sender.name == "apps.celery.parser.parser_check",
+        sender.name == "apps.celery.parser.parser_check_all",
     )
     if any(condition):
         send_telegram_message.delay(msg_task_success(sender.name))
@@ -80,9 +80,9 @@ def task_failure_handler(
 ):
     logger.error(f"❌ Задача '{sender.name}' завершилась с ошибкой: {exception}")
     condition = (
-        sender.name == "apps.celery.tasks.parser_login",
-        sender.name == "apps.celery.tasks.parser_check",
-        sender.name == "apps.celery.tasks.parser_check_all",
+        sender.name == "apps.celery.parser.parser_login",
+        sender.name == "apps.celery.parser.parser_check",
+        sender.name == "apps.celery.parser.parser_check_all",
     )
     if any(condition):
         send_telegram_message.delay(msg_task_success(sender.name, exception))
