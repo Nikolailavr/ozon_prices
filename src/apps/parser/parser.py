@@ -129,7 +129,6 @@ class Parser:
                         send_telegram_message.delay(price_change(user, new_link))
             else:
                 send_telegram_message.delay(need_authorization())
-                redis_client.delete("cookies")
         if need_close:
             self.__close_resources()
 

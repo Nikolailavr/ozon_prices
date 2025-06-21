@@ -68,6 +68,14 @@ async def cmd_check_all(message: Message):
     await message.answer("Запускаем проверку всех пользователей")
 
 
+@router.message(Command("del_cookie"))
+async def cmd_delete_cookie(message: Message):
+    if message.chat.id != settings.telegram.admin_chat_id:
+        return  # игнорим остальных
+    await async_redis_client.delete("cookies")
+    await message.answer("Cookie удалены")
+
+
 @router.message(Command("myip"))
 async def __myip(msg: Message) -> None:
     if str(msg.from_user.id) == settings.telegram.admin_chat_id:

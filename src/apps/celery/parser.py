@@ -63,6 +63,18 @@ def parser_check_all():
 @task_success.connect
 def task_success_handler(sender=None, result=None, **kwargs):
     logger.info(f"✅ Задача '{sender.name}' выполнена успешно")
+    condition = (
+        sender.name == "apps.celery.tasks.parser_login",
+        sender.name == "apps.celery.tasks.parser_check",
+        sender.name == "apps.celery.tasks.parser_check_all",
+    )
+    if any(condition):
+        send_telegram_message.delay(
+            {
+                "chat_id": settings.telegram.admin_chat_id,
+                "text": f"✅ Задача '{sender.name}' выполнена успешно",
+            }
+        )
 
 
 # Ошибка при выполнении задачи
@@ -71,8 +83,12 @@ def task_failure_handler(
     sender=None, task_id=None, exception=None, args=None, **kwargs
 ):
     logger.error(f"❌ Задача '{sender.name}' завершилась с ошибкой: {exception}")
-
-    if sender.name == "apps.celery.tasks.parser_login":
+    condition = (
+        sender.name == "apps.celery.tasks.parser_login",
+        sender.name == "apps.celery.tasks.parser_check",
+        sender.name == "apps.celery.tasks.parser_check_all",
+    )
+    if any(condition):
         send_telegram_message.delay(
             {
                 "chat_id": settings.telegram.admin_chat_id,
