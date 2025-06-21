@@ -3,8 +3,10 @@ import logging
 from apps.parser import Parser
 from apps.celery.celery_app import celery_app
 from apps.celery.helper import CeleryHelper
+from apps.celery.telegram import send_telegram_message
 from celery.signals import task_success, task_failure
 
+from core import settings
 from core.database.schemas import UserRead
 
 logger = logging.getLogger(__name__)
@@ -70,5 +72,10 @@ def task_failure_handler(
 ):
     logger.error(f"❌ Задача '{sender.name}' завершилась с ошибкой: {exception}")
 
-    if sender.name == "apps.celery.tasks.parser_login" and args:
-        ...
+    if sender.name == "apps.celery.tasks.parser_login":
+        send_telegram_message.delay(
+            {
+                "chat_id": settings.telegram.admin_chat_id,
+                "text": f"Задача '{sender.name}' завершилась с ошибкой: {exception}",
+            }
+        )
