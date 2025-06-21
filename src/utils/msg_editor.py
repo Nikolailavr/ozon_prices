@@ -1,3 +1,5 @@
+from typing import Any
+
 from core import settings
 from core.database.schemas import (
     LinkBig,
@@ -76,4 +78,18 @@ def code_sent():
     return {
         "chat_id": settings.telegram.admin_chat_id,
         "text": "Код для авторизации отправлен, требуется проверить почту",
+    }
+
+def msg_task_success(name: str):
+    text = escape_markdown(f"✅ Задача '{name}' выполнена успешно")
+    return {
+                "chat_id": settings.telegram.admin_chat_id,
+                "text": text,
+    }
+
+def msg_task_failure(name: str, ex: Any):
+    text = escape_markdown(f"❌ Задача '{name}' завершилась с ошибкой: {ex}")
+    return {
+                "chat_id": settings.telegram.admin_chat_id,
+                "text": text,
     }

@@ -8,6 +8,7 @@ from celery.signals import task_success, task_failure
 
 from core import settings
 from core.database.schemas import UserRead
+from utils.msg_editor import msg_task_success
 
 logger = logging.getLogger(__name__)
 
@@ -69,12 +70,7 @@ def task_success_handler(sender=None, result=None, **kwargs):
         sender.name == "apps.celery.tasks.parser_check_all",
     )
     if any(condition):
-        send_telegram_message.delay(
-            {
-                "chat_id": settings.telegram.admin_chat_id,
-                "text": f"✅ Задача '{sender.name}' выполнена успешно",
-            }
-        )
+        send_telegram_message.delay(msg_task_success(sender.name))
 
 
 # Ошибка при выполнении задачи
@@ -89,9 +85,4 @@ def task_failure_handler(
         sender.name == "apps.celery.tasks.parser_check_all",
     )
     if any(condition):
-        send_telegram_message.delay(
-            {
-                "chat_id": settings.telegram.admin_chat_id,
-                "text": f"Задача '{sender.name}' завершилась с ошибкой: {exception}",
-            }
-        )
+        send_telegram_message.delay(msg_task_success(sender.name, exception))
