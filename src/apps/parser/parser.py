@@ -89,7 +89,10 @@ class Parser:
         if self._driver is None:
             self._driver_run()
         try:
-            return self.__login()
+            self.__login()
+            self.__waiting_code()
+            self.__save_cookie()
+            return True
         except Exception as ex:
             logger.error(f"Error in Login: {ex}")
             raise ex
@@ -122,6 +125,7 @@ class Parser:
             logger.info(f"Start checking url of user: {user.telegram_id}")
             self._get_url_data(user.url)
             if self.__check_authorization():
+                self.__save_cookie()
                 products = self.__extract_products_v2()
                 for item in products:
                     new_link = await Checker.check_price_changing(item)
@@ -237,7 +241,6 @@ class Parser:
             submit_button.click()
             logger.info("Код должен быть отправлен, проверка почты")
             send_telegram_message.delay(code_sent())
-            return self.__waiting_code()
         else:
             raise HTTPInputError("Доступ ограничен")
 
@@ -259,9 +262,9 @@ class Parser:
     def __input_code(self, code: str):
         input_field = self._driver.find_element(By.NAME, "otp")
         input_field.send_keys(code)
-
         time.sleep(5)
 
+    def __save_cookie(self):
         cookies = self._driver.get_cookies()
         for num, item in enumerate(cookies):
             if item.get("name", "") == "ozonIdAuthResponseToken":
