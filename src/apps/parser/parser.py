@@ -171,6 +171,8 @@ class Parser:
         if self.__check_antibot():
             cookies = json.loads(cookies_json)
             for cookie in cookies:
+                if cookie.get("name", "") == "ozonIdAuthResponseToken":
+                    continue
                 try:
                     cookie.pop("sameSite")
                     self._driver.add_cookie(cookie)
@@ -261,6 +263,9 @@ class Parser:
         time.sleep(5)
 
         cookies = self._driver.get_cookies()
+        for num, item in enumerate(cookies):
+            if item.get("name", "") == "ozonIdAuthResponseToken":
+                logger.info(cookies.pop(num))
         cookies_json = json.dumps(cookies, ensure_ascii=False)
         redis_client.set("cookies", cookies_json)
 
