@@ -108,6 +108,7 @@ class Parser:
             self._driver_run()
             for user in users:
                 await self.check(user=user)
+            logger.info("Проверка успешно завершена")
         except Exception as ex:
             logger.error(ex)
             raise ex
@@ -434,6 +435,7 @@ class Parser:
         if auth_block and "Вы не авторизованы" in auth_block.get_text(strip=True):
             logger.info("Требуется авторизация, cookie устарели!")
             return False
+        logger.info("Авторизация выполнена")
         return True
 
     def __scroll_to_bottom(
